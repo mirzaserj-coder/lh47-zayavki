@@ -55,8 +55,12 @@ def supabase(method, path, body=None, prefer=None):
         headers['Prefer'] = prefer
     req = urllib.request.Request(url, method=method, headers=headers,
                                  data=json.dumps(body).encode() if body is not None else None)
-    with urllib.request.urlopen(req, timeout=10) as r:
-        raw = r.read()
+    try:
+        with urllib.request.urlopen(req, timeout=10) as r:
+            raw = r.read()
+    except urllib.error.HTTPError as e:  # Supabase explains why (bad key, RLS, missing table) in the body
+        print('supabase', method, path.split('?')[0], e.code, e.read()[:300].decode('utf-8', 'replace'))
+        raise
     return json.loads(raw) if raw else None
 
 
