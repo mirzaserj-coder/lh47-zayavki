@@ -45,9 +45,19 @@ def local_time(iso):
 
 
 # ---------- Supabase ----------
+def supabase_key():
+    # The Supabase ↔ Vercel integration syncs SUPABASE_SECRET_KEY / SUPABASE_SERVICE_ROLE_KEY; a hand-set
+    # SUPABASE_SERVICE_KEY is the fallback.
+    for name in ('SUPABASE_SECRET_KEY', 'SUPABASE_SERVICE_ROLE_KEY', 'SUPABASE_SERVICE_KEY'):
+        v = (os.environ.get(name) or '').strip()
+        if v:
+            return v
+    raise RuntimeError('Не задан ключ Supabase (SUPABASE_SECRET_KEY / SUPABASE_SERVICE_ROLE_KEY)')
+
+
 def supabase(method, path, body=None, prefer=None):
     url = env('SUPABASE_URL').rstrip('/') + '/rest/v1/' + path
-    key = env('SUPABASE_SERVICE_KEY')
+    key = supabase_key()
     headers = {'apikey': key, 'Content-Type': 'application/json'}
     if key.startswith('eyJ'):  # legacy service_role JWT; new sb_secret_… keys go in apikey only
         headers['Authorization'] = 'Bearer ' + key
