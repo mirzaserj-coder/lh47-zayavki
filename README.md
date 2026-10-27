@@ -27,8 +27,8 @@
 
 | Переменная | Откуда взять |
 | --- | --- |
-| `SUPABASE_URL` | Supabase → Project Settings → Data API → Project URL |
-| `SUPABASE_SERVICE_KEY` | Supabase → Project Settings → API Keys → `service_role` (secret) |
+| `SUPABASE_URL` | `https://vnaugyfoqlgktssvvhtx.supabase.co` (Supabase → Project Settings → Data API) |
+| `SUPABASE_SERVICE_KEY` | Supabase → Project Settings → API Keys → Secret key `sb_secret_…` (или legacy `service_role`) |
 | `TELEGRAM_BOT_TOKEN` | @BotFather → `/newbot` → токен |
 | `TELEGRAM_CHAT_ID` | ваш id: напишите боту `/start`, затем откройте `https://api.telegram.org/bot<токен>/getUpdates` → `message.chat.id` |
 | `ADMIN_PASSWORD` | придумайте пароль для входа в `/admin` |

@@ -48,7 +48,9 @@ def local_time(iso):
 def supabase(method, path, body=None, prefer=None):
     url = env('SUPABASE_URL').rstrip('/') + '/rest/v1/' + path
     key = env('SUPABASE_SERVICE_KEY')
-    headers = {'apikey': key, 'Authorization': 'Bearer ' + key, 'Content-Type': 'application/json'}
+    headers = {'apikey': key, 'Content-Type': 'application/json'}
+    if key.startswith('eyJ'):  # legacy service_role JWT; new sb_secret_… keys go in apikey only
+        headers['Authorization'] = 'Bearer ' + key
     if prefer:
         headers['Prefer'] = prefer
     req = urllib.request.Request(url, method=method, headers=headers,
