@@ -81,11 +81,18 @@ def notify(lead):
     text = ('🟠 Новая заявка с сайта LH47\n\n'
             f"👤 {lead['name']}\n📞 {lead['phone']}\n💬 {lead['comment']}\n\n"
             f"🕒 {local_time(lead['created_at'])}\n№ {lead['id']} · статус: {lead['status']}")
-    url = f"https://api.telegram.org/bot{env('TELEGRAM_BOT_TOKEN')}/sendMessage"
+    token = env('TELEGRAM_BOT_TOKEN').removeprefix('bot')
+    url = f'https://api.telegram.org/bot{token}/sendMessage'
     body = json.dumps({'chat_id': env('TELEGRAM_CHAT_ID'), 'text': text}).encode()
     req = urllib.request.Request(url, data=body, headers={'Content-Type': 'application/json'})
-    with urllib.request.urlopen(req, timeout=10) as r:
-        return json.load(r).get('ok')
+    try:
+        with urllib.request.urlopen(req, timeout=10) as r:
+            return json.load(r).get('ok')
+    except urllib.error.HTTPError as e:  # 404 = bad token, 400/403 = bad chat id or bot not started
+        shape = 'ok' if re.fullmatch(r'\d{6,12}:[\w-]{30,}', token) else 'bad'
+        print('telegram', e.code, e.read()[:200].decode('utf-8', 'replace'),
+              f'| token shape={shape} length={len(token)}')  # never the token itself
+        raise
 
 
 # ---------- admin session ----------
