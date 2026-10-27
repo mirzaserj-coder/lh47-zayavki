@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LH47 — заявка на проект</title>
+<meta name="description" content="Архитектурное бюро LH47: частные дома, жилые и туристические комплексы. Оставьте заявку — архитектор свяжется с вами.">
+<link rel="icon" href="/img/logo.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0e0f12;--panel:#17191e;--line:#2a2d35;--text:#f2f2f2;--muted:#9aa0aa;--acc:#ff4002;--err:#ff6b5a;--ok:#3ccf8e}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font:16px/1.55 Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+h1,h2,h3,.btn,.brand{font-family:Montserrat,sans-serif}
+a{color:inherit}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+
+header{position:fixed;inset:0 0 auto;z-index:10;background:linear-gradient(#0e0f12e6,#0e0f1200);transition:background .3s}
+header.solid{background:#0e0f12f2;border-bottom:1px solid var(--line)}
+header .wrap{display:flex;align-items:center;justify-content:space-between;height:72px}
+.brand{display:flex;align-items:center;gap:12px;font-weight:700;letter-spacing:.08em;text-decoration:none}
+.brand img{width:40px;height:40px}
+nav{display:flex;gap:28px;align-items:center}
+nav a{text-decoration:none;color:var(--muted);font-size:14px}
+nav a:hover{color:var(--text)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--acc);color:#fff;border:0;border-radius:4px;padding:14px 26px;font-weight:700;font-size:14px;letter-spacing:.06em;text-transform:uppercase;text-decoration:none;cursor:pointer;transition:filter .2s,transform .2s}
+.btn:hover{filter:brightness(1.1)}
+.btn:active{transform:translateY(1px)}
+.btn[disabled]{opacity:.6;cursor:wait}
+nav .btn{padding:10px 18px;font-size:12px}
+
+.hero{position:relative;min-height:100svh;display:flex;align-items:flex-end;overflow:hidden}
+.slide{position:absolute;inset:0;background:center/cover no-repeat;opacity:0;transform:scale(1.06);transition:opacity 1.4s,transform 7s linear}
+.slide.on{opacity:1;transform:scale(1)}
+.hero::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,#0e0f1255 0%,#0e0f1200 35%,#0e0f12ee 85%,var(--bg) 100%)}
+.hero .wrap{position:relative;z-index:1;padding-bottom:72px;width:100%}
+.kicker{color:var(--acc);font:600 13px Montserrat;letter-spacing:.2em;text-transform:uppercase}
+.hero h1{font-size:clamp(34px,6vw,72px);line-height:1.05;font-weight:800;margin:14px 0 18px;max-width:14ch}
+.hero p{color:#d0d3d9;max-width:52ch;font-size:18px;margin-bottom:30px}
+.caption{margin-top:28px;color:var(--muted);font-size:13px;min-height:20px}
+
+section{padding:96px 0}
+section{scroll-margin-top:64px}
+h2{font-size:clamp(28px,4vw,44px);line-height:1.1;font-weight:700;margin:10px 0 40px;max-width:20ch}
+.grid{display:grid;gap:1px;background:var(--line);border:1px solid var(--line)}
+.services{grid-template-columns:repeat(4,1fr)}
+.card{background:var(--bg);padding:32px 26px}
+.card b{display:block;color:var(--acc);font:700 14px Montserrat;margin-bottom:22px}
+.card h3{font-size:19px;margin-bottom:10px}
+.card p{color:var(--muted);font-size:15px}
+.projects{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.proj{position:relative;aspect-ratio:4/3;overflow:hidden;border-radius:4px;background:var(--panel)}
+.proj img{width:100%;height:100%;object-fit:cover;transition:transform .6s}
+.proj:hover img{transform:scale(1.05)}
+.proj div{position:absolute;inset:auto 0 0;padding:40px 18px 16px;background:linear-gradient(#0000,#000c)}
+.proj small{color:var(--acc);font-size:12px;letter-spacing:.1em;text-transform:uppercase}
+.proj h3{font-size:16px;font-weight:600}
+.steps{grid-template-columns:repeat(4,1fr)}
+
+#form{background:var(--panel);border-top:1px solid var(--line)}
+.form-grid{display:grid;grid-template-columns:1fr 1.2fr;gap:64px;align-items:start}
+.contacts{color:var(--muted);margin-top:24px;display:grid;gap:10px}
+.contacts a{color:var(--text);text-decoration:none;font-weight:500}
+form{display:grid;gap:18px}
+label{display:grid;gap:8px;font-size:13px;color:var(--muted);letter-spacing:.04em}
+input,textarea{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:4px;color:var(--text);font:16px Inter,sans-serif;padding:14px 16px;outline:none;transition:border-color .2s}
+textarea{min-height:130px;resize:vertical}
+input:focus,textarea:focus{border-color:var(--acc)}
+.bad input,.bad textarea{border-color:var(--err)}
+.hint{color:var(--err);font-size:13px;min-height:0}
+.hp{position:absolute;left:-9999px}
+.note{font-size:12px;color:var(--muted)}
+.form-error{color:var(--err);font-size:14px}
+.done{display:none;text-align:center;padding:48px 24px;border:1px solid var(--line);border-radius:4px;background:var(--bg)}
+.done .ico{width:64px;height:64px;border-radius:50%;background:var(--acc);display:grid;place-items:center;margin:0 auto 20px;font-size:30px}
+.done h3{font-size:24px;margin-bottom:10px}
+.done p{color:var(--muted)}
+.sent form{display:none}.sent .done{display:block}
+
+footer{border-top:1px solid var(--line);padding:28px 0;color:var(--muted);font-size:13px}
+footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+
+@media (max-width:900px){
+  nav a:not(.btn){display:none}
+  .services,.steps{grid-template-columns:1fr 1fr}
+  .projects{grid-template-columns:1fr 1fr}
+  .form-grid{grid-template-columns:1fr;gap:36px}
+  section{padding:72px 0}
+}
+@media (max-width:560px){
+  .wrap{padding:0 16px}
+  .services,.steps,.projects{grid-template-columns:1fr}
+  .hero p{font-size:16px}
+  .hero .btn{width:100%}
+  .brand span{display:none}
+}
+</style>
+</head>
+<body>
+<header id="top">
+  <div class="wrap">
+    <a class="brand" href="#"><img src="/img/logo.svg" alt="LH47"><span>LH47 ARCHITECTS</span></a>
+    <nav>
+      <a href="#services">Услуги</a>
+      <a href="#projects">Проекты</a>
+      <a href="#process">Как работаем</a>
+      <a class="btn" href="#form">Заявка</a>
+    </nav>
+  </div>
+</header>
+
+<section class="hero" aria-label="LH47">
+  <div class="slide on" style="background-image:url(/img/p3274_01.jpg)" data-cap="Вилла у воды с атриумом · 2025"></div>
+  <div class="slide" style="background-image:url(/img/p664_01.jpg)" data-cap="Гостиничный комплекс на берегу Днестра · 2025"></div>
+  <div class="slide" style="background-image:url(/img/p3545_01.jpg)" data-cap="Жилой комплекс с подземным паркингом · 2024"></div>
+  <div class="slide" style="background-image:url(/img/p675_01.jpg)" data-cap="Туристический комплекс Wake Park · 2024"></div>
+  <div class="wrap">
+    <div class="kicker">Архитектурное бюро · Молдова · Румыния · Грузия</div>
+    <h1>Проектируем дома, в которых хочется жить</h1>
+    <p>Частные дома, жилые и туристические комплексы — от эскиза до авторского надзора. Расскажите о задаче, и архитектор LH47 свяжется с вами в течение рабочего дня.</p>
+    <a class="btn" href="#form">Оставить заявку →</a>
+    <div class="caption" id="caption">Вилла у воды с атриумом · 2025</div>
+  </div>
+</section>
+
+<section id="services">
+  <div class="wrap">
+    <div class="kicker">Услуги</div>
+    <h2>Полный цикл архитектурного проекта</h2>
+    <div class="grid services">
+      <div class="card"><b>01</b><h3>Эскизный проект</h3><p>Концепция, планировки, объёмы и визуализации — чтобы увидеть дом до стройки.</p></div>
+      <div class="card"><b>02</b><h3>Рабочий проект</h3><p>Архитектура, конструктив и инженерные разделы для получения разрешения и строительства.</p></div>
+      <div class="card"><b>03</b><h3>Дизайн интерьера</h3><p>Эргономика, материалы, свет и мебель — единый образ снаружи и внутри.</p></div>
+      <div class="card"><b>04</b><h3>Авторский надзор</h3><p>Контроль на стройке, чтобы результат совпал с проектом.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="projects" style="padding-top:0">
+  <div class="wrap">
+    <div class="kicker">Проекты</div>
+    <h2>Жилая и туристическая архитектура</h2>
+    <div class="projects">
+      <div class="proj"><img src="/img/p3274_01.jpg" alt="" loading="lazy"><div><small>Частный дом · 2025</small><h3>Вилла у воды с атриумом</h3></div></div>
+      <div class="proj"><img src="/img/p635_01.jpg" alt="" loading="lazy"><div><small>Частный дом · 2025</small><h3>Вилла с внутренним двором и бассейном</h3></div></div>
+      <div class="proj"><img src="/img/p3545_01.jpg" alt="" loading="lazy"><div><small>Жилой комплекс · 2024</small><h3>Жилой комплекс с подземным паркингом</h3></div></div>
+      <div class="proj"><img src="/img/p664_01.jpg" alt="" loading="lazy"><div><small>Туризм · 2025</small><h3>Гостиничный комплекс на берегу Днестра</h3></div></div>
+      <div class="proj"><img src="/img/p2725_01.jpg" alt="" loading="lazy"><div><small>Туризм · 2024</small><h3>Винодельческий комплекс</h3></div></div>
+      <div class="proj"><img src="/img/p675_01.jpg" alt="" loading="lazy"><div><small>Туризм · 2024</small><h3>Wake Park</h3></div></div>
+    </div>
+  </div>
+</section>
+
+<section id="process" style="padding-top:0">
+  <div class="wrap">
+    <div class="kicker">Как работаем</div>
+    <h2>От заявки до проекта</h2>
+    <div class="grid steps">
+      <div class="card"><b>Шаг 1</b><h3>Заявка</h3><p>Вы оставляете контакты и пару слов о задаче.</p></div>
+      <div class="card"><b>Шаг 2</b><h3>Звонок</h3><p>Менеджер уточняет участок, бюджет и сроки.</p></div>
+      <div class="card"><b>Шаг 3</b><h3>Встреча</h3><p>Архитектор показывает подход и похожие проекты.</p></div>
+      <div class="card"><b>Шаг 4</b><h3>Договор</h3><p>Фиксируем состав работ, этапы и стоимость.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="form">
+  <div class="wrap form-grid">
+    <div>
+      <div class="kicker">Заявка</div>
+      <h2>Обсудим ваш проект</h2>
+      <p style="color:var(--muted)">Оставьте имя и телефон — мы перезвоним и ответим на вопросы. Это ни к чему не обязывает.</p>
+      <div class="contacts">
+        <div>Сайт: <a href="https://lh47arch.com" target="_blank" rel="noopener">lh47arch.com</a></div>
+        <div>Офисы: Кишинёв · Бухарест · Тбилиси</div>
+      </div>
+    </div>
+    <div id="formbox">
+      <form id="lead" novalidate>
+        <label id="f-name">Имя *
+          <input name="name" autocomplete="name" maxlength="80" placeholder="Как к вам обращаться">
+          <span class="hint"></span>
+        </label>
+        <label id="f-phone">Телефон *
+          <input name="phone" type="tel" autocomplete="tel" maxlength="25" placeholder="+373 69 123 456">
+          <span class="hint"></span>
+        </label>
+        <label id="f-comment">Комментарий *
+          <textarea name="comment" maxlength="2000" placeholder="Что хотите построить, где участок, какие сроки"></textarea>
+          <span class="hint"></span>
+        </label>
+        <input class="hp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+        <div class="form-error" id="form-error" role="alert"></div>
+        <button class="btn" type="submit" id="send">Отправить заявку</button>
+        <div class="note">Нажимая кнопку, вы соглашаетесь на обработку контактных данных для ответа на заявку.</div>
+      </form>
+      <div class="done" role="status">
+        <div class="ico">✓</div>
+        <h3 id="done-title">Спасибо! Заявка отправлена</h3>
+        <p>Архитектор LH47 свяжется с вами в течение рабочего дня.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap"><span>© LH47 Architects</span><a href="/admin">Вход для сотрудников</a></div>
+</footer>
+
+<script>
+// Header background on scroll
+const hdr = document.getElementById('top');
+addEventListener('scroll', () => hdr.classList.toggle('solid', scrollY > 40), {passive: true});
+
+// Hero slideshow
+const slides = [...document.querySelectorAll('.slide')], cap = document.getElementById('caption');
+let cur = 0;
+setInterval(() => {
+  slides[cur].classList.remove('on');
+  cur = (cur + 1) % slides.length;
+  slides[cur].classList.add('on');
+  cap.textContent = slides[cur].dataset.cap;
+}, 6000);
+
+// Lead form — same rules as the server (api/_lib.clean_lead)
+const form = document.getElementById('lead'), btn = document.getElementById('send'), ferr = document.getElementById('form-error');
+const rules = {
+  name: v => v.replace(/\s+/g, ' ').trim().length >= 2 || 'Укажите имя (минимум 2 символа).',
+  phone: v => {
+    const d = v.replace(/\D/g, '');
+    return /^[+\d\s()\-]{6,25}$/.test(v.trim()) && d.length >= 7 && d.length <= 15 || 'Укажите телефон, например +373 69 123 456.';
+  },
+  comment: v => v.trim().length >= 3 || 'Расскажите коротко о проекте (минимум 3 символа).',
+};
+function check(name) {
+  const res = rules[name](form[name].value), box = document.getElementById('f-' + name);
+  box.classList.toggle('bad', res !== true);
+  box.querySelector('.hint').textContent = res === true ? '' : res;
+  return res === true;
+}
+Object.keys(rules).forEach(n => form[n].addEventListener('input', () => {
+  if (document.getElementById('f-' + n).classList.contains('bad')) check(n);
+}));
+form.addEventListener('submit', async e => {
+  e.preventDefault();
+  ferr.textContent = '';
+  const ok = Object.keys(rules).map(check).every(Boolean);
+  if (!ok) { form.querySelector('.bad input, .bad textarea').focus(); return; }
+  btn.disabled = true; btn.textContent = 'Отправляем…';
+  try {
+    const r = await fetch('/api/lead', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(Object.fromEntries(new FormData(form))),
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok || !data.ok) throw new Error(data.error || 'Не удалось отправить заявку. Попробуйте ещё раз.');
+    document.getElementById('done-title').textContent = `Спасибо, ${form.name.value.trim().split(' ')[0]}! Заявка отправлена`;
+    document.getElementById('formbox').classList.add('sent');
+  } catch (err) {
+    ferr.textContent = err.message.startsWith('Failed') ? 'Нет связи с сервером. Проверьте интернет и попробуйте ещё раз.' : err.message;
+  } finally {
+    btn.disabled = false; btn.textContent = 'Отправить заявку';
+  }
+});
+</script>
+</body>
+</html>

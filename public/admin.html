@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>LH47 — заявки</title>
+<link rel="icon" href="/img/logo.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0e0f12;--panel:#17191e;--line:#2a2d35;--text:#f2f2f2;--muted:#9aa0aa;--acc:#ff4002;--err:#ff6b5a;
+  --s-new:#ff4002;--s-work:#f5b83d;--s-done:#3ccf8e}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font:15px/1.5 Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+h1,h2,.btn,.brand{font-family:Montserrat,sans-serif}
+.btn{background:var(--acc);color:#fff;border:0;border-radius:4px;padding:12px 22px;font-weight:700;font-size:13px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
+.btn.ghost{background:none;border:1px solid var(--line);color:var(--muted)}
+.btn.ghost:hover{color:var(--text);border-color:var(--muted)}
+input,select{background:var(--bg);border:1px solid var(--line);border-radius:4px;color:var(--text);font:15px Inter,sans-serif;padding:12px 14px;outline:none}
+input:focus,select:focus{border-color:var(--acc)}
+[hidden]{display:none!important}
+
+/* login */
+.login{min-height:100svh;display:grid;place-items:center;padding:16px}
+.login form{width:100%;max-width:360px;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:32px;display:grid;gap:16px}
+.login img{width:52px}
+.login h1{font-size:22px}
+.login p{color:var(--muted);font-size:14px}
+.err{color:var(--err);font-size:14px;min-height:20px}
+
+/* app */
+header{position:sticky;top:0;z-index:5;background:#0e0f12f2;border-bottom:1px solid var(--line)}
+header .in{max-width:1180px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;gap:16px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.06em;text-decoration:none;color:inherit;margin-right:auto}
+.brand img{width:34px}
+main{max-width:1180px;margin:0 auto;padding:24px 20px 60px}
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:20px}
+.bar h1{font-size:24px;margin-right:auto}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{background:var(--panel);border:1px solid var(--line);color:var(--muted);border-radius:20px;padding:7px 14px;font:500 13px Inter;cursor:pointer}
+.tab b{color:var(--text);margin-left:4px}
+.tab.on{border-color:var(--acc);color:var(--text);background:#ff40021a}
+.list{display:grid;gap:10px}
+.row{display:grid;grid-template-columns:130px 1fr 170px 140px;gap:16px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px 18px;cursor:pointer;transition:border-color .2s}
+.row:hover{border-color:#454a55}
+.row.fresh{animation:fresh 2.5s}
+@keyframes fresh{from{border-color:var(--acc)}}
+.time{color:var(--muted);font-size:13px}
+.who b{display:block;font-weight:600}
+.who span{color:var(--muted);font-size:13px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.phone{font-variant-numeric:tabular-nums}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500}
+.pill::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--c)}
+.empty{color:var(--muted);text-align:center;padding:60px 0;border:1px dashed var(--line);border-radius:6px}
+
+/* detail */
+.overlay{position:fixed;inset:0;background:#000a;z-index:20;display:flex;justify-content:flex-end}
+.sheet{width:min(480px,100%);height:100%;overflow:auto;background:var(--panel);border-left:1px solid var(--line);padding:28px;display:grid;gap:20px;align-content:start}
+.sheet .top{display:flex;justify-content:space-between;align-items:center}
+.sheet h2{font-size:24px}
+.close{background:none;border:0;color:var(--muted);font-size:28px;cursor:pointer;line-height:1}
+.field small{color:var(--muted);display:block;font-size:12px;letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px}
+.field a{color:var(--text)}
+.comment{white-space:pre-wrap;background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:14px}
+.statuses{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.st{border:1px solid var(--line);background:var(--bg);color:var(--text);border-radius:4px;padding:12px 6px;font:500 14px Inter;cursor:pointer}
+.st.on{border-color:var(--c);background:color-mix(in srgb,var(--c) 18%,transparent)}
+.saved{color:var(--muted);font-size:13px;min-height:18px}
+
+@media (max-width:760px){
+  .row{grid-template-columns:1fr auto;gap:4px 12px;padding:14px}
+  .row .time{grid-column:1;order:3}
+  .row .who{grid-column:1/-1}
+  .row .phone{order:2;grid-column:1}
+  .row .pill{order:4;grid-column:2;grid-row:2/span 2;align-self:center}
+  main,header .in{padding-left:16px;padding-right:16px}
+  .brand span{display:none}
+}
+</style>
+</head>
+<body>
+
+<div class="login" id="login" hidden>
+  <form id="loginForm">
+    <img src="/img/logo.svg" alt="LH47">
+    <h1>Заявки LH47</h1>
+    <p>Раздел для сотрудников. Введите пароль администратора.</p>
+    <input type="password" name="password" placeholder="Пароль" autocomplete="current-password" required>
+    <div class="err" id="loginErr"></div>
+    <button class="btn" type="submit">Войти</button>
+  </form>
+</div>
+
+<div id="app" hidden>
+  <header><div class="in">
+    <a class="brand" href="/"><img src="/img/logo.svg" alt="LH47"><span>LH47 · ЗАЯВКИ</span></a>
+    <button class="btn ghost" id="refresh">Обновить</button>
+    <button class="btn ghost" id="logout">Выйти</button>
+  </div></header>
+  <main>
+    <div class="bar">
+      <h1>Заявки</h1>
+      <div class="tabs" id="tabs"></div>
+    </div>
+    <div class="list" id="list"></div>
+  </main>
+</div>
+
+<div class="overlay" id="overlay" hidden>
+  <div class="sheet" id="sheet"></div>
+</div>
+
+<script>
+const STATUSES = [['новая', 'var(--s-new)'], ['в работе', 'var(--s-work)'], ['закрыта', 'var(--s-done)']];
+const color = s => (STATUSES.find(x => x[0] === s) || [0, 'var(--muted)'])[1];
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
+const $ = id => document.getElementById(id);
+let leads = [], filter = '', known = new Set();
+
+async function api(path, opts = {}) {
+  const r = await fetch(path, {credentials: 'same-origin', headers: {'Content-Type': 'application/json'}, ...opts});
+  if (r.status === 401 && path !== '/api/login') { showLogin(); throw new Error('auth'); }
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(data.error || 'Ошибка сервера');
+  return data;
+}
+
+function showLogin() { $('app').hidden = true; $('overlay').hidden = true; $('login').hidden = false; $('loginForm').password.focus(); }
+function showApp() { $('login').hidden = true; $('app').hidden = false; load(); }
+
+$('loginForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  $('loginErr').textContent = '';
+  try {
+    await api('/api/login', {method: 'POST', body: JSON.stringify({password: e.target.password.value})});
+    e.target.reset(); showApp();
+  } catch (err) { $('loginErr').textContent = err.message; }
+});
+$('logout').onclick = async () => { await api('/api/login', {method: 'DELETE'}); leads = []; showLogin(); };
+$('refresh').onclick = () => load();
+
+// All leads are loaded once; the status filter works on them, counters stay right.
+async function load() {
+  try {
+    const data = await api('/api/leads');
+    const first = known.size === 0;
+    data.leads.forEach(l => { l.fresh = !first && !known.has(l.id); known.add(l.id); });
+    leads = data.leads;
+    render();
+  } catch (err) {
+    if (err.message !== 'auth') $('list').innerHTML = `<div class="empty">${esc(err.message)}</div>`;
+  }
+}
+
+function render() {
+  const count = s => leads.filter(l => !s || l.status === s).length;
+  $('tabs').innerHTML = [['', 'Все'], ...STATUSES.map(([s]) => [s, s[0].toUpperCase() + s.slice(1)])]
+    .map(([s, t]) => `<button class="tab${filter === s ? ' on' : ''}" data-s="${s}">${t}<b>${count(s)}</b></button>`).join('');
+  const shown = leads.filter(l => !filter || l.status === filter);
+  $('list').innerHTML = shown.length ? shown.map(l => `
+    <div class="row${l.fresh ? ' fresh' : ''}" data-id="${l.id}">
+      <div class="time">${esc(l.local_time)}</div>
+      <div class="who"><b>${esc(l.name)}</b><span>${esc(l.comment)}</span></div>
+      <div class="phone">${esc(l.phone)}</div>
+      <div class="pill" style="--c:${color(l.status)}">${esc(l.status)}</div>
+    </div>`).join('') : `<div class="empty">${filter ? 'Нет заявок со статусом «' + esc(filter) + '»' : 'Заявок пока нет'}</div>`;
+}
+
+$('tabs').onclick = e => { const t = e.target.closest('.tab'); if (t) { filter = t.dataset.s; render(); } };
+$('list').onclick = e => { const r = e.target.closest('.row'); if (r) open(+r.dataset.id); };
+
+function open(id) {
+  const l = leads.find(x => x.id === id);
+  $('sheet').innerHTML = `
+    <div class="top"><span class="time">Заявка № ${l.id}</span><button class="close" aria-label="Закрыть">×</button></div>
+    <h2>${esc(l.name)}</h2>
+    <div class="field"><small>Телефон</small><a href="tel:${esc(l.phone.replace(/[^\d+]/g, ''))}">${esc(l.phone)}</a></div>
+    <div class="field"><small>Получена</small>${esc(l.local_time)} (Кишинёв)</div>
+    <div class="field"><small>Комментарий</small><div class="comment">${esc(l.comment)}</div></div>
+    <div class="field"><small>Статус</small><div class="statuses">${STATUSES.map(([s, c]) =>
+      `<button class="st${l.status === s ? ' on' : ''}" style="--c:${c}" data-s="${s}">${s}</button>`).join('')}</div></div>
+    <div class="saved" id="saved"></div>`;
+  $('overlay').hidden = false;
+  $('sheet').querySelector('.close').onclick = close;
+  $('sheet').querySelector('.statuses').onclick = async e => {
+    const b = e.target.closest('.st');
+    if (!b || b.dataset.s === l.status) return;
+    $('saved').textContent = 'Сохраняю…';
+    try {
+      const {lead} = await api('/api/leads', {method: 'PATCH', body: JSON.stringify({id: l.id, status: b.dataset.s})});
+      Object.assign(l, lead, {fresh: false});
+      render(); open(l.id);
+      $('saved').textContent = 'Статус сохранён';
+    } catch (err) { if (err.message !== 'auth') $('saved').textContent = err.message; }
+  };
+}
+function close() { $('overlay').hidden = true; }
+$('overlay').onclick = e => { if (e.target.id === 'overlay') close(); };
+addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+setInterval(() => { if (!$('app').hidden && document.visibilityState === 'visible') load(); }, 30000);
+
+api('/api/login').then(d => d.admin ? showApp() : showLogin()).catch(showLogin);
+</script>
+</body>
+</html>
