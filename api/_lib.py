@@ -69,7 +69,9 @@ def supabase(method, path, body=None, prefer=None):
         with urllib.request.urlopen(req, timeout=10) as r:
             raw = r.read()
     except urllib.error.HTTPError as e:  # Supabase explains why (bad key, RLS, missing table) in the body
-        print('supabase', method, path.split('?')[0], e.code, e.read()[:300].decode('utf-8', 'replace'))
+        kind = next((p for p in ('sb_secret_', 'sb_publishable_', 'eyJ') if key.startswith(p)), 'unknown')
+        print('supabase', method, path.split('?')[0], e.code, e.read()[:300].decode('utf-8', 'replace'),
+              f'| key type={kind} length={len(key)}')  # never the key itself
         raise
     return json.loads(raw) if raw else None
 
