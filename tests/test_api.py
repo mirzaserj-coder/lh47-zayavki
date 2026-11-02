@@ -17,6 +17,12 @@ class LeadValidation(unittest.TestCase):
         for phone in ('123', 'abc-defg-hij', '+1' + '2' * 20):
             self.assertIsNotNone(_lib.clean_lead({'name': 'Иван', 'phone': phone, 'comment': 'дом'})[1], phone)
 
+    def test_market(self):
+        lead, err = _lib.clean_lead({'name': 'Пётр', 'phone': '@petr_msk', 'comment': 'Тип проекта: Частный дом', 'market': 'ru'})
+        self.assertIsNone(err)
+        self.assertEqual(lead['market'], 'ru')
+        self.assertEqual(_lib.clean_lead({'name': 'Ion', 'phone': '+373 69 123 456', 'comment': 'casa', 'market': 'xx'})[0]['market'], 'md')
+
     def test_chisinau_time(self):
         self.assertEqual(_lib.local_time('2026-10-27T18:05:00+00:00'), '27.10.2026 20:05')
 

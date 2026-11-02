@@ -8,6 +8,9 @@ from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 
 STATUSES = ('новая', 'в работе', 'закрыта')
+MARKETS = {'md': '🇲🇩 Молдова', 'ru': '🇷🇺 Россия'}
+# Сайты, с которых форма может слать заявки сюда (русский сайт — статичный, без своего сервера).
+ALLOWED_ORIGINS = ('https://lh47-russia.vercel.app', 'https://lh47.ru', 'https://www.lh47.ru')
 SESSION_COOKIE = 'lh47_admin'
 SESSION_DAYS = 7
 TZ = ZoneInfo('Europe/Chisinau')
@@ -26,14 +29,16 @@ def clean_lead(data):
     name = ' '.join(str(data.get('name') or '').split())
     phone = str(data.get('phone') or '').strip()
     comment = str(data.get('comment') or '').strip()
+    market = data.get('market') if data.get('market') in MARKETS else 'md'
     if len(name) < 2 or len(name) > 80:
         return None, 'Укажите имя (от 2 до 80 символов).'
     digits = re.sub(r'\D', '', phone)
-    if not re.fullmatch(r'[+\d\s()\-]{6,25}', phone) or not 7 <= len(digits) <= 15:
-        return None, 'Укажите телефон, например +373 69 123 456.'
+    telegram = re.fullmatch(r'@?[A-Za-z][\w]{4,31}', phone)  # «Телефон или Telegram» на русском сайте
+    if not telegram and (not re.fullmatch(r'[+\d\s()\-]{6,25}', phone) or not 7 <= len(digits) <= 15):
+        return None, 'Укажите телефон, например +7 900 123 45 67, или Telegram.' if market == 'ru' else 'Укажите телефон, например +373 69 123 456.'
     if len(comment) < 3 or len(comment) > 2000:
         return None, 'Расскажите коротко о проекте (от 3 до 2000 символов).'
-    return {'name': name, 'phone': phone, 'comment': comment}, None
+    return {'name': name, 'phone': phone, 'comment': comment, 'market': market}, None
 
 
 def local_time(iso):
@@ -78,7 +83,7 @@ def supabase(method, path, body=None, prefer=None):
 
 # ---------- Telegram ----------
 def notify(lead):
-    text = ('🟠 Новая заявка с сайта LH47\n\n'
+    text = (f"🟠 Новая заявка с сайта LH47 · {MARKETS.get(lead.get('market') or 'md')}\n\n"
             f"👤 {lead['name']}\n📞 {lead['phone']}\n💬 {lead['comment']}\n\n"
             f"🕒 {local_time(lead['created_at'])}\n№ {lead['id']} · статус: {lead['status']}")
     token = env('TELEGRAM_BOT_TOKEN').removeprefix('bot')
@@ -149,11 +154,22 @@ def read_json(handler):
         return {}
 
 
+def cors(handler):
+    """Разрешить форме русского сайта отправлять заявки (только с перечисленных адресов)."""
+    origin = handler.headers.get('Origin') or ''
+    if origin in ALLOWED_ORIGINS:
+        handler.send_header('Access-Control-Allow-Origin', origin)
+        handler.send_header('Access-Control-Allow-Methods', 'POST, OPTIONS')
+        handler.send_header('Access-Control-Allow-Headers', 'Content-Type')
+        handler.send_header('Vary', 'Origin')
+
+
 def send_json(handler, code, data, headers=()):
     body = json.dumps(data, ensure_ascii=False).encode()
     handler.send_response(code)
     handler.send_header('Content-Type', 'application/json; charset=utf-8')
     handler.send_header('Cache-Control', 'no-store')
+    cors(handler)
     for k, v in headers:
         handler.send_header(k, v)
     handler.end_headers()

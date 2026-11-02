@@ -1,11 +1,16 @@
 """POST /api/lead — a visitor's request: validate, save to Supabase with status «новая», notify Telegram."""
-import os, sys
+import os, sys, urllib.error
 from http.server import BaseHTTPRequestHandler
 sys.path.insert(0, os.path.dirname(__file__))
 import _lib
 
 
 class handler(BaseHTTPRequestHandler):
+    def do_OPTIONS(self):  # предзапрос браузера с русского сайта
+        self.send_response(204)
+        _lib.cors(self)
+        self.end_headers()
+
     def do_POST(self):
         data = _lib.read_json(self)
         if data.get('website'):  # honeypot field, hidden from people
@@ -14,7 +19,13 @@ class handler(BaseHTTPRequestHandler):
         if error:
             return _lib.send_json(self, 400, {'ok': False, 'error': error})
         try:
-            saved = _lib.supabase('POST', 'leads', dict(lead, status='новая'), prefer='return=representation')[0]
+            try:
+                saved = _lib.supabase('POST', 'leads', dict(lead, status='новая'), prefer='return=representation')[0]
+            except urllib.error.HTTPError as e:  # колонки market ещё нет (SQL из supabase.sql не запущен) — сохраняем без неё
+                if e.code != 400 or lead['market'] != 'md':
+                    raise
+                old = {k: v for k, v in lead.items() if k != 'market'}
+                saved = _lib.supabase('POST', 'leads', dict(old, status='новая'), prefer='return=representation')[0]
         except Exception as e:
             print('lead save failed:', repr(e))
             return _lib.send_json(self, 500, {'ok': False, 'error': 'Не удалось сохранить заявку. Попробуйте ещё раз или позвоните нам.'})

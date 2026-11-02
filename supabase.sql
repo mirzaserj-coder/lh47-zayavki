@@ -12,3 +12,6 @@ create index if not exists leads_created_at_idx on public.leads (created_at desc
 -- Row Level Security on, no policies: the public anon key can neither read nor write.
 -- Only the site's server functions (service_role key from Vercel settings) work with the table.
 alter table public.leads enable row level security;
+
+-- Два канала заявок: md — Молдова (этот сайт), ru — Россия (lh47-russia.vercel.app). Запустить один раз.
+alter table public.leads add column if not exists market text not null default 'md' check (market in ('md', 'ru'));
