@@ -58,7 +58,7 @@ textarea{min-height:90px;resize:vertical}
     <a href="https://t.me/lh47_zayavki_bot">Открыть @lh47_zayavki_bot</a>
   </div>
 
-  <form id="form" hidden>
+  <form id="form" novalidate hidden>
     <div>
       <h1 id="hello">Здравствуйте!</h1>
       <p class="muted">Выберите услугу — архитектор LH47 свяжется с вами в течение рабочего дня.</p>
@@ -124,22 +124,30 @@ async function start() {
       <label class="svc"><input type="radio" name="service" value="${esc(s)}"${i ? '' : ' checked'}>
         <b>${esc(s)}</b><span>${esc(ABOUT[s] || '')}</span></label>`).join('');
     $('phoneHint').textContent = me.username ? `Можно не указывать — напишем вам в Telegram @${me.username}.` : 'Telegram-логина нет, поэтому нужен телефон.';
-    $('phone').required = !me.username;
     $('loading').hidden = true; $('form').hidden = false;
   } catch (e) { outside(e.status === 401 ? e.message : 'Не удалось связаться с сервером. Попробуйте позже.'); }
 }
 
 $('form').addEventListener('submit', async e => {
   e.preventDefault();
-  const f = e.target; $('err').textContent = ''; $('send').disabled = true;
+  const f = e.target; $('err').textContent = '';
+  if (!me.username && !f.elements.phone.value.trim()) return fail('Укажите телефон — у вас в Telegram нет @логина, по которому можно написать.');
+  $('send').disabled = true;
   try {
     const {id} = await call({send: 1, service: f.elements.service.value, phone: f.elements.phone.value, comment: f.elements.comment.value});
     $('form').hidden = true; $('done').hidden = false;
     $('doneTitle').textContent = `Спасибо, ${me.name}! Заявка № ${id} принята`;
     tg && tg.HapticFeedback && tg.HapticFeedback.notificationOccurred('success');
-  } catch (err) { $('err').textContent = err.message; }
+  } catch (err) { fail(err.message); }
   $('send').disabled = false;
 });
+
+// Встроенный браузер Telegram не всегда показывает подсказки формы — ошибку показываем сами, и всплывающим окном.
+function fail(text) {
+  $('err').textContent = text;
+  $('err').scrollIntoView({block: 'center', behavior: 'smooth'});
+  try { tg && tg.showAlert(text); } catch (e) { /* старый Telegram без showAlert */ }
+}
 
 start();
 </script>
