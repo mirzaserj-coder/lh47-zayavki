@@ -1,4 +1,5 @@
 import os, sys, time, unittest
+os.environ['TELEGRAM_BOT_TOKEN'] = '123456:test-token'
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'api'))
 os.environ['ADMIN_PASSWORD'] = 'test-password'
 import _lib
@@ -45,6 +46,26 @@ class Funnel(unittest.TestCase):
         self.assertEqual([h['stage'] for h in patch['history']], ['Новая', 'Оплачено'])
         self.assertEqual(len(row['history']), 1)  # the original row is untouched
         _lib.local_time(patch['history'][-1]['at'])  # stored time is readable back
+
+
+class TelegramInitData(unittest.TestCase):
+    def setUp(self):
+        sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+        from dev_server import sign_init_data
+        self.sign = sign_init_data
+
+    def test_signed_user_is_accepted(self):
+        user = _lib.telegram_user(self.sign({'id': 7, 'first_name': 'Сергей', 'last_name': 'М'}))
+        self.assertEqual((user['id'], _lib.telegram_name(user)), (7, 'Сергей М'))
+
+    def test_forged_or_old_is_rejected(self):
+        good = self.sign({'id': 7, 'first_name': 'Сергей'})
+        self.assertIn('%D0%A1', good)  # «С» of «Сергей»
+        self.assertIsNone(_lib.telegram_user(good.replace('%D0%A1', '%D0%9F', 1)))  # name changed in the browser
+        self.assertIsNone(_lib.telegram_user(good + 'x'))
+        self.assertIsNone(_lib.telegram_user(self.sign({'id': 7}, auth_date=int(time.time()) - 3 * 86400)))
+        self.assertIsNone(_lib.telegram_user(''))
+        self.assertIsNone(_lib.telegram_user('user=%7B%22id%22%3A1%7D&auth_date=1'))
 
 
 class Session(unittest.TestCase):

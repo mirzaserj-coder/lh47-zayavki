@@ -101,7 +101,7 @@ def supabase(method, path, body=None, prefer=None):
 
 # ---------- Telegram ----------
 def notify(lead):
-    text = (f"🟠 Новая заявка с сайта LH47 · {MARKETS.get(lead.get('market') or 'md')}\n\n"
+    text = (f"🟠 Новая заявка LH47 · {lead.get('source') or 'Сайт'} · {MARKETS.get(lead.get('market') or 'md')}\n\n"
             f"👤 {lead['name']}\n📞 {lead['phone']}\n💬 {lead['comment']}\n\n"
             f"🕒 {local_time(lead['created_at'])}\n№ {lead['id']} · статус: {lead['status']}")
     token = env('TELEGRAM_BOT_TOKEN').removeprefix('bot')
@@ -116,6 +116,35 @@ def notify(lead):
         print('telegram', e.code, e.read()[:200].decode('utf-8', 'replace'),
               f'| token shape={shape} length={len(token)}')  # never the token itself
         raise
+
+
+# ---------- Telegram Mini App ----------
+SERVICES = ('Эскизный проект', 'Рабочий проект', 'Дизайн интерьера', 'Авторский надзор')
+INIT_DATA_DAYS = 1
+
+
+def telegram_user(init_data, max_age=INIT_DATA_DAYS * 86400):
+    """Telegram user dict if initData is signed with our bot token and fresh, else None.
+
+    https://core.telegram.org/bots/webapps#validating-data-received-via-the-mini-app — the browser can't forge it
+    without the token, so the name and id come from Telegram, not from whoever opened the page."""
+    try:
+        fields = dict(urllib.parse.parse_qsl(str(init_data or ''), strict_parsing=True))
+        given = fields.pop('hash')
+        check = '\n'.join(f'{k}={v}' for k, v in sorted(fields.items()))
+        token = env('TELEGRAM_BOT_TOKEN').removeprefix('bot')
+        secret = hmac.new(b'WebAppData', token.encode(), hashlib.sha256).digest()
+        good = hmac.new(secret, check.encode(), hashlib.sha256).hexdigest()
+        if not hmac.compare_digest(given, good) or time.time() - int(fields['auth_date']) > max_age:
+            return None
+        user = json.loads(fields['user'])
+        return user if user.get('id') else None
+    except (KeyError, ValueError, TypeError):
+        return None
+
+
+def telegram_name(user):
+    return ' '.join(x for x in (user.get('first_name'), user.get('last_name')) if x).strip()[:80] or 'Без имени'
 
 
 # ---------- admin session ----------

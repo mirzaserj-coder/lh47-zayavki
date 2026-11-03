@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>LH47 — заявка в Telegram</title>
+<link rel="icon" href="/img/logo.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@600;700&display=swap" rel="stylesheet">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root{--bg:#0e0f12;--panel:#17191e;--line:#2a2d35;--text:#f2f2f2;--muted:#9aa0aa;--acc:#ff4002;--err:#ff6b5a;--ok:#3ccf8e}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg)}
+body{color:var(--text);font:15px/1.5 Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased;
+  padding:calc(var(--tg-safe-area-inset-top,0px) + var(--tg-content-safe-area-inset-top,0px) + 16px) 16px
+    calc(var(--tg-safe-area-inset-bottom,0px) + 24px)}
+h1,h2,.btn{font-family:Montserrat,sans-serif}
+[hidden]{display:none!important}
+.wrap{max-width:520px;margin:0 auto;display:grid;gap:18px}
+.brand{display:flex;align-items:center;gap:10px;font:700 13px Montserrat;letter-spacing:.08em}
+.brand img{width:30px}
+h1{font-size:24px;line-height:1.25}
+.muted{color:var(--muted);font-size:14px}
+.services{display:grid;gap:10px}
+.svc{display:block;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px 16px;cursor:pointer;transition:border-color .15s}
+.svc input{position:absolute;opacity:0}
+.svc b{display:flex;justify-content:space-between;gap:10px;font-weight:600}
+.svc b::after{content:"";flex:none;width:18px;height:18px;border-radius:50%;border:2px solid var(--line)}
+.svc span{display:block;color:var(--muted);font-size:13px;margin-top:4px}
+.svc:has(input:checked){border-color:var(--acc);background:#ff400214}
+.svc:has(input:checked) b::after{border-color:var(--acc);background:radial-gradient(var(--acc) 45%,transparent 50%)}
+label.f{display:grid;gap:6px;font-size:13px;color:var(--muted)}
+input[type=tel],textarea{width:100%;background:var(--panel);border:1px solid var(--line);border-radius:4px;color:var(--text);font:16px Inter,sans-serif;padding:12px 14px;outline:none}
+input:focus,textarea:focus{border-color:var(--acc)}
+textarea{min-height:90px;resize:vertical}
+.btn{width:100%;background:var(--acc);color:#fff;border:0;border-radius:4px;padding:15px;font-weight:700;font-size:14px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
+.btn:disabled{opacity:.6}
+.err{color:var(--err);font-size:14px;min-height:20px}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:28px 20px;text-align:center;display:grid;gap:10px;justify-items:center}
+.box .ico{font-size:40px;line-height:1}
+.box a{color:var(--acc);font-weight:600}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand"><img src="/img/logo.svg" alt="">LH47 · АРХИТЕКТУРНОЕ БЮРО</div>
+
+  <div id="loading" class="muted">Загрузка…</div>
+
+  <!-- Открыли не в Telegram (или подпись не прошла проверку на сервере): данных нет. -->
+  <div id="outside" class="box" hidden>
+    <div class="ico">📱</div>
+    <h2>Откройте в Telegram</h2>
+    <p class="muted" id="outsideText">Это приложение работает только внутри Telegram — через кнопку меню бота LH47.</p>
+    <a href="https://t.me/lh47_zayavki_bot">Открыть @lh47_zayavki_bot</a>
+  </div>
+
+  <form id="form" hidden>
+    <div>
+      <h1 id="hello">Здравствуйте!</h1>
+      <p class="muted">Выберите услугу — архитектор LH47 свяжется с вами в течение рабочего дня.</p>
+    </div>
+    <div class="services" id="services"></div>
+    <label class="f">Телефон
+      <input type="tel" name="phone" id="phone" placeholder="+373 69 123 456" autocomplete="tel" inputmode="tel">
+      <span id="phoneHint"></span>
+    </label>
+    <label class="f">Пара слов о проекте (необязательно)
+      <textarea name="comment" maxlength="1500" placeholder="Дом 180 м², участок под Кишинёвом"></textarea>
+    </label>
+    <div class="err" id="err"></div>
+    <button class="btn" type="submit" id="send">Оставить заявку</button>
+  </form>
+
+  <div id="done" class="box" hidden>
+    <div class="ico">✅</div>
+    <h2 id="doneTitle">Заявка принята</h2>
+    <p class="muted">Мы свяжемся с вами в течение рабочего дня.</p>
+  </div>
+</div>
+
+<script>
+const ABOUT = {
+  'Эскизный проект': 'Концепция, планировки и визуализации — увидеть дом до стройки.',
+  'Рабочий проект': 'Архитектура, конструктив и инженерия для разрешения и стройки.',
+  'Дизайн интерьера': 'Эргономика, материалы, свет и мебель.',
+  'Авторский надзор': 'Контроль на стройке, чтобы результат совпал с проектом.',
+};
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
+const tg = window.Telegram && Telegram.WebApp;
+// Только подписанная строка initData уходит на сервер; имя показываем то, что сервер проверил.
+const initData = (tg && tg.initData) || '';
+let me = null;
+
+async function call(body) {
+  const r = await fetch('/api/tg', {method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({initData, ...body})});
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) throw Object.assign(new Error(data.error || 'Ошибка сервера'), {status: r.status});
+  return data;
+}
+
+function outside(text) {
+  $('loading').hidden = true; $('outside').hidden = false;
+  if (text) $('outsideText').textContent = text;
+}
+
+async function start() {
+  if (tg) {
+    tg.ready(); tg.expand();
+    if (tg.isVersionAtLeast && tg.isVersionAtLeast('8.0') && ['ios', 'android'].includes(tg.platform)) tg.requestFullscreen();
+    tg.setHeaderColor && tg.setHeaderColor('#0e0f12'); tg.setBackgroundColor && tg.setBackgroundColor('#0e0f12');
+  }
+  if (!initData) return outside();
+  try {
+    const data = await call({});
+    me = data.user;
+    $('hello').textContent = `Здравствуйте, ${me.name}!`;
+    $('services').innerHTML = data.services.map((s, i) => `
+      <label class="svc"><input type="radio" name="service" value="${esc(s)}"${i ? '' : ' checked'}>
+        <b>${esc(s)}</b><span>${esc(ABOUT[s] || '')}</span></label>`).join('');
+    $('phoneHint').textContent = me.username ? `Можно не указывать — напишем вам в Telegram @${me.username}.` : 'Telegram-логина нет, поэтому нужен телефон.';
+    $('phone').required = !me.username;
+    $('loading').hidden = true; $('form').hidden = false;
+  } catch (e) { outside(e.status === 401 ? e.message : 'Не удалось связаться с сервером. Попробуйте позже.'); }
+}
+
+$('form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const f = e.target; $('err').textContent = ''; $('send').disabled = true;
+  try {
+    const {id} = await call({send: 1, service: f.elements.service.value, phone: f.elements.phone.value, comment: f.elements.comment.value});
+    $('form').hidden = true; $('done').hidden = false;
+    $('doneTitle').textContent = `Спасибо, ${me.name}! Заявка № ${id} принята`;
+    tg && tg.HapticFeedback && tg.HapticFeedback.notificationOccurred('success');
+  } catch (err) { $('err').textContent = err.message; }
+  $('send').disabled = false;
+});
+
+start();
+</script>
+</body>
+</html>

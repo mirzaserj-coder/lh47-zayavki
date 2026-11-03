@@ -10,6 +10,7 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 ROOT = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(ROOT, 'api'))
 os.environ.setdefault('ADMIN_PASSWORD', 'dev')
+os.environ.setdefault('TELEGRAM_BOT_TOKEN', '123456:dev-token')  # fake: signs the test initData from /dev-initdata
 import _lib
 
 rows, ids = [], itertools.count(1)
@@ -32,9 +33,18 @@ def fake_supabase(method, path, body=None, prefer=None):
         return hit
 
 
+def sign_init_data(user, auth_date=None):
+    import hashlib, hmac, time
+    fields = {'auth_date': str(auth_date or int(time.time())), 'query_id': 'dev', 'user': json.dumps(user, ensure_ascii=False)}
+    check = '\n'.join(f'{k}={v}' for k, v in sorted(fields.items()))
+    secret = hmac.new(b'WebAppData', os.environ['TELEGRAM_BOT_TOKEN'].encode(), hashlib.sha256).digest()
+    fields['hash'] = hmac.new(secret, check.encode(), hashlib.sha256).hexdigest()
+    return urllib.parse.urlencode(fields)
+
+
 _lib.supabase = fake_supabase
 _lib.notify = lambda lead: print('TELEGRAM →', json.dumps(lead, ensure_ascii=False))
-handlers = {n: importlib.import_module(n).handler for n in ('lead', 'leads', 'login')}
+handlers = {n: importlib.import_module(n).handler for n in ('lead', 'leads', 'login', 'tg')}
 
 
 class Dev(SimpleHTTPRequestHandler):
@@ -50,8 +60,12 @@ class Dev(SimpleHTTPRequestHandler):
             return getattr(h, 'do_' + verb)(self)
         if verb != 'GET':
             return self.send_error(405)
-        if path == '/admin':  # Vercel cleanUrls
-            self.path = '/admin.html'
+        if path in ('/admin', '/app'):  # Vercel cleanUrls
+            self.path = path + '.html'
+        if path == '/dev-initdata':  # initData as Telegram would sign it, for opening /app#tgWebAppData=… locally
+            body = sign_init_data({'id': 42, 'first_name': 'Сергей', 'username': 'lh47_test'}).encode()
+            self.send_response(200); self.send_header('Content-Type', 'text/plain; charset=utf-8'); self.end_headers()
+            return self.wfile.write(body)
         super().do_GET()
 
     def do_GET(self): self.route('GET')
