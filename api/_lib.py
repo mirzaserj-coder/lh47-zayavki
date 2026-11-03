@@ -118,6 +118,22 @@ def notify(lead):
         raise
 
 
+def tg_api(method, body):
+    token = env('TELEGRAM_BOT_TOKEN').removeprefix('bot')
+    req = urllib.request.Request(f'https://api.telegram.org/bot{token}/{method}', data=json.dumps(body).encode(),
+                                 headers={'Content-Type': 'application/json'})
+    try:
+        with urllib.request.urlopen(req, timeout=10) as r:
+            return json.load(r)
+    except urllib.error.HTTPError as e:
+        return json.loads(e.read() or b'{}') or {'ok': False, 'error_code': e.code}
+
+
+def webhook_secret():
+    # Telegram echoes it in X-Telegram-Bot-Api-Secret-Token, so only Telegram can post updates to /api/tgbot.
+    return hashlib.sha256(('lh47-webhook:' + env('TELEGRAM_BOT_TOKEN')).encode()).hexdigest()[:48]
+
+
 # ---------- Telegram Mini App ----------
 SERVICES = ('Эскизный проект', 'Рабочий проект', 'Дизайн интерьера', 'Авторский надзор')
 INIT_DATA_DAYS = 1
