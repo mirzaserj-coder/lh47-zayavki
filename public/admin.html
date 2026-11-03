@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
-<title>LH47 — заявки</title>
+<title>LH47 — CRM</title>
 <link rel="icon" href="/img/logo.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -32,28 +32,34 @@ input:focus,select:focus{border-color:var(--acc)}
 
 /* app */
 header{position:sticky;top:0;z-index:5;background:#0e0f12f2;border-bottom:1px solid var(--line)}
-header .in{max-width:1180px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;gap:16px}
+header .in{max-width:1480px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;gap:12px}
 .brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.06em;text-decoration:none;color:inherit;margin-right:auto}
 .brand img{width:34px}
-main{max-width:1180px;margin:0 auto;padding:24px 20px 60px}
-.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:20px}
-.bar h1{font-size:24px;margin-right:auto}
-.tabs{display:flex;gap:6px;flex-wrap:wrap}
-.tab{background:var(--panel);border:1px solid var(--line);color:var(--muted);border-radius:20px;padding:7px 14px;font:500 13px Inter;cursor:pointer}
-.tab b{color:var(--text);margin-left:4px}
-.tab.on{border-color:var(--acc);color:var(--text);background:#ff40021a}
-.list{display:grid;gap:10px}
-.row{display:grid;grid-template-columns:130px 1fr 170px 140px;gap:16px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px 18px;cursor:pointer;transition:border-color .2s}
-.row:hover{border-color:#454a55}
-.row.fresh{animation:fresh 2.5s}
-@keyframes fresh{from{border-color:var(--acc)}}
+main{max-width:1480px;margin:0 auto;padding:24px 20px 60px}
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:baseline;margin-bottom:18px}
+.bar h1{font-size:24px}
+.bar .sum{color:var(--muted);font-size:14px}
 .time{color:var(--muted);font-size:13px}
-.who b{display:block;font-weight:600}
-.who span{color:var(--muted);font-size:13px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.phone{font-variant-numeric:tabular-nums}
-.pill{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500}
-.pill::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--c)}
 .empty{color:var(--muted);text-align:center;padding:60px 0;border:1px dashed var(--line);border-radius:6px}
+
+/* board */
+.board{display:grid;grid-template-columns:repeat(6,minmax(210px,1fr));gap:12px;overflow-x:auto;padding-bottom:8px;scroll-snap-type:x mandatory}
+.col{background:var(--panel);border:1px solid var(--line);border-radius:6px;display:flex;flex-direction:column;min-height:360px;scroll-snap-align:start;transition:border-color .15s}
+.col.over{border-color:var(--c);background:color-mix(in srgb,var(--c) 6%,var(--panel))}
+.col h3{display:flex;align-items:center;gap:8px;font:600 13px Inter;letter-spacing:.04em;text-transform:uppercase;padding:12px 14px;border-bottom:1px solid var(--line)}
+.col h3::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--c)}
+.col h3 b{margin-left:auto;color:var(--muted);font-weight:500}
+.cards{padding:8px;display:grid;gap:8px;align-content:start;flex:1}
+.card{background:var(--bg);border:1px solid var(--line);border-left:3px solid var(--c);border-radius:4px;padding:10px 12px;cursor:pointer;transition:border-color .2s}
+.card:hover{border-color:#454a55;border-left-color:var(--c)}
+.card[draggable=true]{cursor:grab}
+.card.drag{opacity:.4}
+.card.fresh{animation:fresh 2.5s}
+@keyframes fresh{from{box-shadow:0 0 0 2px var(--acc)}}
+.card b{display:block;font-weight:600;font-size:14px}
+.card .phone{font-size:13px;font-variant-numeric:tabular-nums;color:var(--muted)}
+.card .meta{display:flex;justify-content:space-between;gap:6px;margin-top:6px;font-size:12px;color:var(--muted)}
+.src{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;border:1px solid var(--line);border-radius:3px;padding:1px 6px;color:var(--text)}
 
 /* detail */
 .overlay{position:fixed;inset:0;background:#000a;z-index:20;display:flex;justify-content:flex-end}
@@ -63,20 +69,29 @@ main{max-width:1180px;margin:0 auto;padding:24px 20px 60px}
 .close{background:none;border:0;color:var(--muted);font-size:28px;cursor:pointer;line-height:1}
 .field small{color:var(--muted);display:block;font-size:12px;letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px}
 .field a{color:var(--text)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .comment{white-space:pre-wrap;background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:14px}
 .statuses{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.st{border:1px solid var(--line);background:var(--bg);color:var(--text);border-radius:4px;padding:12px 6px;font:500 14px Inter;cursor:pointer}
+.st{border:1px solid var(--line);background:var(--bg);color:var(--text);border-radius:4px;padding:11px 4px;font:500 13px Inter;cursor:pointer}
 .st.on{border-color:var(--c);background:color-mix(in srgb,var(--c) 18%,transparent)}
+textarea{width:100%;min-height:110px;resize:vertical;background:var(--bg);border:1px solid var(--line);border-radius:4px;color:var(--text);font:15px/1.5 Inter,sans-serif;padding:12px 14px;outline:none}
+textarea:focus{border-color:var(--acc)}
+.sheet form{display:grid;gap:14px}
+.sheet form input{width:100%}
+.btn.sm{padding:9px 16px;font-size:12px;justify-self:start}
+.hist{list-style:none;display:grid;gap:0;border-left:2px solid var(--line);margin-left:4px}
+.hist li{position:relative;padding:0 0 12px 16px;display:flex;justify-content:space-between;gap:10px}
+.hist li::before{content:"";position:absolute;left:-6px;top:6px;width:10px;height:10px;border-radius:50%;background:var(--c)}
+.hist li:last-child{padding-bottom:0}
 .saved{color:var(--muted);font-size:13px;min-height:18px}
 
 @media (max-width:760px){
-  .row{grid-template-columns:1fr auto;gap:4px 12px;padding:14px}
-  .row .time{grid-column:1;order:3}
-  .row .who{grid-column:1/-1}
-  .row .phone{order:2;grid-column:1}
-  .row .pill{order:4;grid-column:2;grid-row:2/span 2;align-self:center}
+  .board{grid-template-columns:repeat(6,82vw);margin:0 -16px;padding:0 16px 8px;scroll-padding:0 16px}
+  .col{min-height:60vh}
   main,header .in{padding-left:16px;padding-right:16px}
   .brand span{display:none}
+  .btn{padding:11px 14px}
+  .sheet{padding:22px 16px}
 }
 </style>
 </head>
@@ -85,7 +100,7 @@ main{max-width:1180px;margin:0 auto;padding:24px 20px 60px}
 <div class="login" id="login" hidden>
   <form id="loginForm">
     <img src="/img/logo.svg" alt="LH47">
-    <h1>Заявки LH47</h1>
+    <h1>CRM LH47</h1>
     <p>Раздел для сотрудников. Введите пароль администратора.</p>
     <input type="password" name="password" placeholder="Пароль" autocomplete="current-password" required>
     <div class="err" id="loginErr"></div>
@@ -95,16 +110,17 @@ main{max-width:1180px;margin:0 auto;padding:24px 20px 60px}
 
 <div id="app" hidden>
   <header><div class="in">
-    <a class="brand" href="/"><img src="/img/logo.svg" alt="LH47"><span>LH47 · ЗАЯВКИ</span></a>
+    <a class="brand" href="/"><img src="/img/logo.svg" alt="LH47"><span>LH47 · CRM</span></a>
+    <button class="btn" id="add">+ Клиент</button>
     <button class="btn ghost" id="refresh">Обновить</button>
     <button class="btn ghost" id="logout">Выйти</button>
   </div></header>
   <main>
     <div class="bar">
-      <h1>Заявки</h1>
-      <div class="tabs" id="tabs"></div>
+      <h1>Воронка</h1>
+      <span class="sum" id="sum"></span>
     </div>
-    <div class="list" id="list"></div>
+    <div class="board" id="board"></div>
   </main>
 </div>
 
@@ -113,11 +129,14 @@ main{max-width:1180px;margin:0 auto;padding:24px 20px 60px}
 </div>
 
 <script>
-const STATUSES = [['новая', 'var(--s-new)'], ['в работе', 'var(--s-work)'], ['закрыта', 'var(--s-done)']];
-const color = s => (STATUSES.find(x => x[0] === s) || [0, 'var(--muted)'])[1];
-const esc = s => String(s).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
+// Этапы воронки — те же, что в api/_lib.py STAGES.
+const STAGES = [['Новая', 'var(--acc)'], ['Связались', '#f5b83d'], ['Встреча', '#5aa9ff'],
+  ['КП отправлено', '#b48cff'], ['Оплачено', '#3ccf8e'], ['Отказ', '#6b7280']];
+const color = s => (STAGES.find(x => x[0] === s) || [0, 'var(--muted)'])[1];
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
 const $ = id => document.getElementById(id);
-let leads = [], filter = '', known = new Set();
+const canDrag = matchMedia('(hover: hover) and (pointer: fine)').matches;  // на телефоне этап меняется в карточке
+let leads = [], known = new Set(), dragging = null;
 
 async function api(path, opts = {}) {
   const r = await fetch(path, {credentials: 'same-origin', headers: {'Content-Type': 'application/json'}, ...opts});
@@ -140,8 +159,8 @@ $('loginForm').addEventListener('submit', async e => {
 });
 $('logout').onclick = async () => { await api('/api/login', {method: 'DELETE'}); leads = []; showLogin(); };
 $('refresh').onclick = () => load();
+$('add').onclick = () => openNew();
 
-// All leads are loaded once; the status filter works on them, counters stay right.
 async function load() {
   try {
     const data = await api('/api/leads');
@@ -150,56 +169,124 @@ async function load() {
     leads = data.leads;
     render();
   } catch (err) {
-    if (err.message !== 'auth') $('list').innerHTML = `<div class="empty">${esc(err.message)}</div>`;
+    if (err.message !== 'auth') $('board').innerHTML = `<div class="empty">${esc(err.message)}</div>`;
   }
 }
 
 function render() {
-  const count = s => leads.filter(l => !s || l.status === s).length;
-  $('tabs').innerHTML = [['', 'Все'], ...STATUSES.map(([s]) => [s, s[0].toUpperCase() + s.slice(1)])]
-    .map(([s, t]) => `<button class="tab${filter === s ? ' on' : ''}" data-s="${s}">${t}<b>${count(s)}</b></button>`).join('');
-  const shown = leads.filter(l => !filter || l.status === filter);
-  $('list').innerHTML = shown.length ? shown.map(l => `
-    <div class="row${l.fresh ? ' fresh' : ''}" data-id="${l.id}">
-      <div class="time">${esc(l.local_time)}</div>
-      <div class="who"><b>${esc(l.name)}</b><span>${esc(l.comment)}</span></div>
-      <div class="phone">${esc(l.phone)}</div>
-      <div class="pill" style="--c:${color(l.status)}">${esc(l.status)}</div>
-    </div>`).join('') : `<div class="empty">${filter ? 'Нет заявок со статусом «' + esc(filter) + '»' : 'Заявок пока нет'}</div>`;
+  const paid = leads.filter(l => l.status === 'Оплачено').length;
+  $('sum').textContent = `${leads.length} клиентов · оплачено ${paid}`;
+  $('board').innerHTML = STAGES.map(([s, c]) => {
+    const list = leads.filter(l => l.status === s);
+    return `<section class="col" data-s="${esc(s)}" style="--c:${c}">
+      <h3>${esc(s)}<b>${list.length}</b></h3>
+      <div class="cards">${list.map(l => `
+        <div class="card${l.fresh ? ' fresh' : ''}" data-id="${l.id}" draggable="${canDrag}" style="--c:${c}">
+          <b>${esc(l.name)}</b>
+          <div class="phone">${esc(l.phone)}</div>
+          <div class="meta"><span class="src">${esc(l.source)}${l.market === 'ru' ? ' · RU' : ''}</span><span>${esc(l.local_time.slice(0, 10))}</span></div>
+        </div>`).join('')}</div>
+    </section>`;
+  }).join('');
 }
 
-$('tabs').onclick = e => { const t = e.target.closest('.tab'); if (t) { filter = t.dataset.s; render(); } };
-$('list').onclick = e => { const r = e.target.closest('.row'); if (r) open(+r.dataset.id); };
+$('board').onclick = e => { const c = e.target.closest('.card'); if (c) open(+c.dataset.id); };
+$('board').addEventListener('dragstart', e => {
+  const c = e.target.closest('.card'); if (!c) return;
+  dragging = +c.dataset.id; c.classList.add('drag'); e.dataTransfer.effectAllowed = 'move';
+});
+$('board').addEventListener('dragend', () => { dragging = null; render(); });
+$('board').addEventListener('dragover', e => {
+  const col = e.target.closest('.col'); if (!col || dragging === null) return;
+  e.preventDefault();
+  document.querySelectorAll('.col.over').forEach(x => x !== col && x.classList.remove('over'));
+  col.classList.add('over');
+});
+$('board').addEventListener('drop', e => {
+  const col = e.target.closest('.col'); if (!col || dragging === null) return;
+  e.preventDefault(); move(dragging, col.dataset.s);
+});
+
+async function save(id, body) {
+  const {lead} = await api('/api/leads', {method: 'PATCH', body: JSON.stringify({id, ...body})});
+  const l = leads.find(x => x.id === id);
+  Object.assign(l, lead, {fresh: false});
+  render();
+  return l;
+}
+
+async function move(id, stage) {
+  const l = leads.find(x => x.id === id);
+  if (!l || l.status === stage) return render();
+  l.status = stage; render();  // сразу показываем, сервер подтверждает
+  try { await save(id, {status: stage}); }
+  catch (err) { if (err.message !== 'auth') { alert(err.message); load(); } }
+}
 
 function open(id) {
   const l = leads.find(x => x.id === id);
   $('sheet').innerHTML = `
-    <div class="top"><span class="time">Заявка № ${l.id}</span><button class="close" aria-label="Закрыть">×</button></div>
+    <div class="top"><span class="time">Клиент № ${l.id}</span><button class="close" aria-label="Закрыть">×</button></div>
     <h2>${esc(l.name)}</h2>
-    <div class="field"><small>Телефон</small><a href="tel:${esc(l.phone.replace(/[^\d+]/g, ''))}">${esc(l.phone)}</a></div>
-    <div class="field"><small>Получена</small>${esc(l.local_time)} (Кишинёв)</div>
-    <div class="field"><small>Комментарий</small><div class="comment">${esc(l.comment)}</div></div>
-    <div class="field"><small>Статус</small><div class="statuses">${STATUSES.map(([s, c]) =>
-      `<button class="st${l.status === s ? ' on' : ''}" style="--c:${c}" data-s="${s}">${s}</button>`).join('')}</div></div>
-    <div class="saved" id="saved"></div>`;
+    <div class="grid2">
+      <div class="field"><small>Телефон</small><a href="tel:${esc(l.phone.replace(/[^\d+]/g, ''))}">${esc(l.phone)}</a></div>
+      <div class="field"><small>Источник</small><span class="src">${esc(l.source)}</span>${l.market === 'ru' ? ' <span class="time">Россия</span>' : ''}</div>
+      <div class="field"><small>Создан</small>${esc(l.local_time)}</div>
+      <div class="field"><small>Этап</small><span style="color:${color(l.status)}">● </span>${esc(l.status)}</div>
+    </div>
+    ${l.comment ? `<div class="field"><small>Заявка</small><div class="comment">${esc(l.comment)}</div></div>` : ''}
+    <div class="field"><small>Перевести на этап</small><div class="statuses">${STAGES.map(([s, c]) =>
+      `<button class="st${l.status === s ? ' on' : ''}" style="--c:${c}" data-s="${esc(s)}">${esc(s)}</button>`).join('')}</div></div>
+    <div class="field"><small>Заметки</small><textarea id="notes" placeholder="Договорились созвониться в пятницу, интересует дом 180 м²…">${esc(l.notes)}</textarea>
+      <button class="btn sm" id="saveNotes" style="margin-top:8px">Сохранить заметку</button></div>
+    <div class="saved" id="saved"></div>
+    <div class="field"><small>История этапов</small><ol class="hist">${l.history.slice().reverse().map(h =>
+      `<li style="--c:${color(h.stage)}"><span>${esc(h.stage)}</span><span class="time">${esc(h.local_time)}</span></li>`).join('')}</ol></div>`;
   $('overlay').hidden = false;
   $('sheet').querySelector('.close').onclick = close;
-  $('sheet').querySelector('.statuses').onclick = async e => {
-    const b = e.target.closest('.st');
-    if (!b || b.dataset.s === l.status) return;
+  const status = async (body, done) => {
     $('saved').textContent = 'Сохраняю…';
+    try { await save(l.id, body); open(l.id); $('saved').textContent = done; }
+    catch (err) { if (err.message !== 'auth') $('saved').textContent = err.message; }
+  };
+  $('sheet').querySelector('.statuses').onclick = e => {
+    const b = e.target.closest('.st');
+    if (b && b.dataset.s !== l.status) status({status: b.dataset.s}, 'Этап «' + b.dataset.s + '» сохранён');
+  };
+  $('saveNotes').onclick = () => status({notes: $('notes').value}, 'Заметка сохранена');
+}
+
+function openNew() {
+  $('sheet').innerHTML = `
+    <div class="top"><span class="time">Новый клиент · источник «Вручную»</span><button class="close" aria-label="Закрыть">×</button></div>
+    <h2>Добавить клиента</h2>
+    <p class="time">После звонка или встречи. Клиент появится на этапе «Новая».</p>
+    <form id="newForm">
+      <input name="name" placeholder="Имя" required minlength="2" maxlength="80" autocomplete="off">
+      <input name="phone" placeholder="Телефон, например +373 69 123 456" required inputmode="tel" autocomplete="off">
+      <textarea name="comment" placeholder="Что хочет клиент (необязательно)" maxlength="2000"></textarea>
+      <div class="err" id="newErr"></div>
+      <button class="btn" type="submit">Добавить в воронку</button>
+    </form>`;
+  $('overlay').hidden = false;
+  $('sheet').querySelector('.close').onclick = close;
+  $('newForm').elements.name.focus();
+  $('newForm').onsubmit = async e => {
+    e.preventDefault();
+    const f = e.target; $('newErr').textContent = '';
     try {
-      const {lead} = await api('/api/leads', {method: 'PATCH', body: JSON.stringify({id: l.id, status: b.dataset.s})});
-      Object.assign(l, lead, {fresh: false});
-      render(); open(l.id);
-      $('saved').textContent = 'Статус сохранён';
-    } catch (err) { if (err.message !== 'auth') $('saved').textContent = err.message; }
+      const {lead} = await api('/api/leads', {method: 'POST', body: JSON.stringify(
+        {name: f.elements.name.value, phone: f.elements.phone.value, comment: f.elements.comment.value})});
+      known.add(lead.id); leads.unshift(lead); render(); open(lead.id);
+      $('saved').textContent = 'Клиент добавлен';
+    } catch (err) { if (err.message !== 'auth') $('newErr').textContent = err.message; }
   };
 }
+
 function close() { $('overlay').hidden = true; }
 $('overlay').onclick = e => { if (e.target.id === 'overlay') close(); };
 addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
-setInterval(() => { if (!$('app').hidden && document.visibilityState === 'visible') load(); }, 30000);
+setInterval(() => { if (!$('app').hidden && $('overlay').hidden && dragging === null && document.visibilityState === 'visible') load(); }, 30000);
 
 api('/api/login').then(d => d.admin ? showApp() : showLogin()).catch(showLogin);
 </script>

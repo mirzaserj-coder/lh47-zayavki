@@ -7,7 +7,9 @@ import base64, hashlib, hmac, json, os, re, time, urllib.error, urllib.parse, ur
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 
-STATUSES = ('новая', 'в работе', 'закрыта')
+# Воронка CRM: первый этап — куда падают новые заявки, «Отказ» — последний.
+STAGES = ('Новая', 'Связались', 'Встреча', 'КП отправлено', 'Оплачено', 'Отказ')
+SOURCES = ('Сайт', 'Вручную', 'Визитка', 'Telegram')
 MARKETS = {'md': '🇲🇩 Молдова', 'ru': '🇷🇺 Россия'}
 # Сайты, с которых форма может слать заявки сюда (русский сайт — статичный, без своего сервера).
 ALLOWED_ORIGINS = ('https://lh47-russia.vercel.app', 'https://lh47.ru', 'https://www.lh47.ru')
@@ -24,8 +26,10 @@ def env(name):
 
 
 # ---------- validation ----------
-def clean_lead(data):
-    """(lead, None) if the form is valid, else (None, error text for the visitor)."""
+def clean_lead(data, manual=False):
+    """(lead, None) if the form is valid, else (None, error text for the visitor).
+
+    manual — клиент, которого менеджер вносит сам после звонка или встречи: комментарий необязателен."""
     name = ' '.join(str(data.get('name') or '').split())
     phone = str(data.get('phone') or '').strip()
     comment = str(data.get('comment') or '').strip()
@@ -36,9 +40,23 @@ def clean_lead(data):
     telegram = re.fullmatch(r'@?[A-Za-z][\w]{4,31}', phone)  # «Телефон или Telegram» на русском сайте
     if not telegram and (not re.fullmatch(r'[+\d\s()\-]{6,25}', phone) or not 7 <= len(digits) <= 15):
         return None, 'Укажите телефон, например +7 900 123 45 67, или Telegram.' if market == 'ru' else 'Укажите телефон, например +373 69 123 456.'
-    if len(comment) < 3 or len(comment) > 2000:
+    if len(comment) > 2000 or (not manual and len(comment) < 3):
         return None, 'Расскажите коротко о проекте (от 3 до 2000 символов).'
     return {'name': name, 'phone': phone, 'comment': comment, 'market': market}, None
+
+
+def now_iso():
+    return datetime.now(timezone.utc).isoformat(timespec='seconds')
+
+
+def new_lead(lead, source):
+    """Row for a new client: first stage of the funnel, the stage history starts with it."""
+    return dict(lead, status=STAGES[0], source=source, notes='', history=[{'stage': STAGES[0], 'at': now_iso()}])
+
+
+def move(row, stage):
+    """PATCH body that moves a client to another stage and records the move in its history."""
+    return {'status': stage, 'history': list(row.get('history') or []) + [{'stage': stage, 'at': now_iso()}]}
 
 
 def local_time(iso):

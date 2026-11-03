@@ -22,8 +22,8 @@ def fake_supabase(method, path, body=None, prefer=None):
         rows.append(row)
         return [row]
     if method == 'GET':
-        st = (q.get('status') or [''])[0].removeprefix('eq.')
-        return sorted((r for r in rows if not st or r['status'] == st), key=lambda r: r['created_at'], reverse=True)
+        lid = (q.get('id') or [''])[0].removeprefix('eq.')
+        return sorted((r for r in rows if not lid or r['id'] == int(lid)), key=lambda r: r['created_at'], reverse=True)
     if method == 'PATCH':
         lid = int(q['id'][0].removeprefix('eq.'))
         hit = [r for r in rows if r['id'] == lid]

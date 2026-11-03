@@ -15,3 +15,18 @@ alter table public.leads enable row level security;
 
 -- Два канала заявок: md — Молдова (этот сайт), ru — Россия (lh47-russia.vercel.app). Запустить один раз.
 alter table public.leads add column if not exists market text not null default 'md' check (market in ('md', 'ru'));
+
+-- ДЗ №2: CRM-воронка — этапы, источник, заметки, история переходов. Запустить один раз.
+alter table public.leads drop constraint if exists leads_status_check;
+update public.leads set status = case status when 'новая' then 'Новая' when 'в работе' then 'Связались'
+  when 'закрыта' then 'Оплачено' else status end;
+alter table public.leads alter column status set default 'Новая';
+alter table public.leads add constraint leads_status_check
+  check (status in ('Новая', 'Связались', 'Встреча', 'КП отправлено', 'Оплачено', 'Отказ'));
+alter table public.leads add column if not exists source text not null default 'Сайт'
+  check (source in ('Сайт', 'Вручную', 'Визитка', 'Telegram'));
+alter table public.leads add column if not exists notes text not null default '';
+alter table public.leads add column if not exists history jsonb not null default '[]'::jsonb;
+-- у старых заявок история начинается с текущего этапа на дату создания
+update public.leads set history = jsonb_build_array(jsonb_build_object('stage', status, 'at', created_at))
+  where history = '[]'::jsonb;

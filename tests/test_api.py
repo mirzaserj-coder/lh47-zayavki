@@ -27,6 +27,26 @@ class LeadValidation(unittest.TestCase):
         self.assertEqual(_lib.local_time('2026-10-27T18:05:00+00:00'), '27.10.2026 20:05')
 
 
+class Funnel(unittest.TestCase):
+    def test_manual_client_needs_no_comment(self):
+        self.assertIsNotNone(_lib.clean_lead({'name': 'Ион', 'phone': '+373 69 123 456'})[1])
+        lead, err = _lib.clean_lead({'name': 'Ион', 'phone': '+373 69 123 456'}, manual=True)
+        self.assertIsNone(err)
+
+    def test_new_lead_starts_on_first_stage(self):
+        row = _lib.new_lead({'name': 'Ион'}, 'Вручную')
+        self.assertEqual((row['status'], row['source'], row['notes']), ('Новая', 'Вручную', ''))
+        self.assertEqual([h['stage'] for h in row['history']], ['Новая'])
+
+    def test_move_appends_history(self):
+        row = _lib.new_lead({'name': 'Ион'}, 'Сайт')
+        patch = _lib.move(row, 'Оплачено')
+        self.assertEqual(patch['status'], 'Оплачено')
+        self.assertEqual([h['stage'] for h in patch['history']], ['Новая', 'Оплачено'])
+        self.assertEqual(len(row['history']), 1)  # the original row is untouched
+        _lib.local_time(patch['history'][-1]['at'])  # stored time is readable back
+
+
 class Session(unittest.TestCase):
     def test_round_trip(self):
         self.assertTrue(_lib.valid_session(_lib.make_session()))
