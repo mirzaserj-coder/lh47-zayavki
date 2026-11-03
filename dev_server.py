@@ -44,7 +44,13 @@ def sign_init_data(user, auth_date=None):
 
 _lib.supabase = fake_supabase
 _lib.notify = lambda lead: print('TELEGRAM →', json.dumps(lead, ensure_ascii=False))
-handlers = {n: importlib.import_module(n).handler for n in ('lead', 'leads', 'login', 'tg')}
+# Claude and Storage are faked too: a plain (small) picture is «not a document», a detailed one «is» a business card.
+_lib.read_card = lambda data, mime: {'is_business_card': len(data) > 20000, 'reason': 'на фото пейзаж',
+                                     'name': 'Ион Попеску', 'phone': '+373 69 777 888', 'company': 'Vinaria SRL',
+                                     'position': 'директор', 'email': 'ion@vinaria.md', 'website': ''}
+_lib.storage_put = lambda name, data, mime: print('STORAGE ←', name, len(data), 'bytes')
+_lib.storage_link = lambda name, seconds=300: '/img/logo.svg'
+handlers = {n: importlib.import_module(n).handler for n in ('lead', 'leads', 'login', 'tg', 'card')}
 
 
 class Dev(SimpleHTTPRequestHandler):

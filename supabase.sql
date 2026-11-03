@@ -30,3 +30,8 @@ alter table public.leads add column if not exists history jsonb not null default
 -- у старых заявок история начинается с текущего этапа на дату создания
 update public.leads set history = jsonb_build_array(jsonb_build_object('stage', status, 'at', created_at))
   where history = '[]'::jsonb;
+
+-- ДЗ №2, блок 2: визитки → CRM. Оригиналы — в закрытом хранилище «cards». Запустить один раз.
+alter table public.leads add column if not exists doc text;
+insert into storage.buckets (id, name, public) values ('cards', 'cards', false) on conflict (id) do nothing;
+notify pgrst, 'reload schema';

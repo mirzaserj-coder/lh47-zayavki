@@ -48,6 +48,15 @@ class Funnel(unittest.TestCase):
         _lib.local_time(patch['history'][-1]['at'])  # stored time is readable back
 
 
+class BusinessCard(unittest.TestCase):
+    def test_comment_skips_empty_fields(self):
+        card = {'company': 'Vinaria SRL', 'position': ' ', 'email': 'ion@vinaria.md', 'website': ''}
+        self.assertEqual(_lib.card_comment(card), 'Компания: Vinaria SRL\nEmail: ion@vinaria.md')
+
+    def test_schema_requires_every_field(self):
+        self.assertEqual(set(_lib.CARD_SCHEMA['required']), set(_lib.CARD_SCHEMA['properties']))
+
+
 class TelegramInitData(unittest.TestCase):
     def setUp(self):
         sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))

@@ -1,10 +1,11 @@
 """Admin only — the CRM.
 
 GET   /api/leads                      — all clients, newest first;
-POST  /api/leads {name, phone, comment} — add a client by hand (source «Вручную»);
+POST  /api/leads {name, phone, comment, doc?} — add a client by hand (source «Вручную»), or from a business card
+                                        checked by the manager (doc from /api/card → source «Визитка»);
 PATCH /api/leads {id, status?, notes?} — move to another stage (recorded in the history) and/or save notes.
 """
-import os, sys
+import os, re, sys
 from http.server import BaseHTTPRequestHandler
 sys.path.insert(0, os.path.dirname(__file__))
 import _lib
@@ -25,10 +26,15 @@ class handler(BaseHTTPRequestHandler):
     def do_POST(self):
         if not _lib.is_admin(self):
             return _lib.send_json(self, 401, {'error': 'Нужен вход'})
-        lead, error = _lib.clean_lead(_lib.read_json(self), manual=True)
+        data = _lib.read_json(self)
+        lead, error = _lib.clean_lead(data, manual=True)
         if error:
             return _lib.send_json(self, 400, {'error': error})
-        saved = _lib.supabase('POST', 'leads', _lib.new_lead(lead, 'Вручную'), prefer='return=representation')[0]
+        doc = str(data.get('doc') or '')
+        row = _lib.new_lead(lead, 'Вручную')
+        if re.fullmatch(r'[0-9a-f]{24}\.(jpg|png|webp|pdf)', doc):
+            row.update(source='Визитка', doc=doc)
+        saved = _lib.supabase('POST', 'leads', row, prefer='return=representation')[0]
         _lib.send_json(self, 200, {'lead': view(saved)})
 
     def do_PATCH(self):

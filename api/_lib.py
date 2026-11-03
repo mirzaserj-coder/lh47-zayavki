@@ -1,7 +1,7 @@
 """Shared helpers: Supabase REST, Telegram, admin session cookie, JSON responses.
 
 All keys come from Vercel environment variables, never from the code:
-SUPABASE_URL, SUPABASE_SERVICE_KEY, TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, ADMIN_PASSWORD.
+SUPABASE_URL, SUPABASE_SERVICE_KEY, TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, ADMIN_PASSWORD, ANTHROPIC_API_KEY.
 """
 import base64, hashlib, hmac, json, os, re, time, urllib.error, urllib.parse, urllib.request
 from datetime import datetime, timezone
@@ -78,12 +78,18 @@ def supabase_key():
     raise RuntimeError('Не задан ключ Supabase (SUPABASE_SECRET_KEY / SUPABASE_SERVICE_ROLE_KEY)')
 
 
+def supabase_headers(content_type='application/json'):
+    key = supabase_key()
+    headers = {'apikey': key, 'Content-Type': content_type}
+    if key.startswith('eyJ'):  # legacy service_role JWT; new sb_secret_… keys go in apikey only
+        headers['Authorization'] = 'Bearer ' + key
+    return headers
+
+
 def supabase(method, path, body=None, prefer=None):
     url = env('SUPABASE_URL').rstrip('/') + '/rest/v1/' + path
     key = supabase_key()
-    headers = {'apikey': key, 'Content-Type': 'application/json'}
-    if key.startswith('eyJ'):  # legacy service_role JWT; new sb_secret_… keys go in apikey only
-        headers['Authorization'] = 'Bearer ' + key
+    headers = supabase_headers()
     if prefer:
         headers['Prefer'] = prefer
     req = urllib.request.Request(url, method=method, headers=headers,
@@ -97,6 +103,73 @@ def supabase(method, path, body=None, prefer=None):
               f'| key type={kind} length={len(key)}')  # never the key itself
         raise
     return json.loads(raw) if raw else None
+
+
+# Originals of scanned documents live in the private Storage bucket «cards»; the admin panel opens them by a
+# short-lived signed link, so a file is never public.
+CARD_BUCKET = 'cards'
+
+
+def storage_put(name, data, mime):
+    url = f"{env('SUPABASE_URL').rstrip('/')}/storage/v1/object/{CARD_BUCKET}/{name}"
+    req = urllib.request.Request(url, data=data, method='POST', headers=supabase_headers(mime))
+    with urllib.request.urlopen(req, timeout=20) as r:
+        r.read()
+
+
+def storage_link(name, seconds=300):
+    base = env('SUPABASE_URL').rstrip('/') + '/storage/v1'
+    req = urllib.request.Request(f'{base}/object/sign/{CARD_BUCKET}/{name}', method='POST',
+                                 data=json.dumps({'expiresIn': seconds}).encode(), headers=supabase_headers())
+    with urllib.request.urlopen(req, timeout=10) as r:
+        return base + json.load(r)['signedURL']
+
+
+# ---------- Claude: business cards ----------
+CARD_MODEL = 'claude-opus-5-5'
+CARD_TYPES = {'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'application/pdf': 'pdf'}
+CARD_FIELDS = ('name', 'phone', 'company', 'position', 'email', 'website')
+CARD_SCHEMA = {
+    'type': 'object',
+    'properties': {
+        'is_business_card': {'type': 'boolean'},
+        'reason': {'type': 'string'},
+        **{f: {'type': 'string'} for f in CARD_FIELDS},
+    },
+    'required': ['is_business_card', 'reason', *CARD_FIELDS],
+    'additionalProperties': False,
+}
+CARD_PROMPT = (
+    'Это фото или PDF, загруженные в CRM архитектурного бюро после встречи с клиентом. '
+    'Определи, визитка ли это (бумажная или электронная визитка человека или компании). '
+    'Если да — is_business_card: true и перепиши с неё поля точно как напечатано: name — имя и фамилия человека, '
+    'phone — основной телефон с кодом страны, company, position — должность, email, website. '
+    'Если поля на визитке нет — пустая строка, ничего не придумывай. '
+    'Если это не визитка (пейзаж, человек, чек, пустой лист, нечитаемо) — is_business_card: false, '
+    'все поля пустые, а в reason коротко по-русски, что на фото.'
+)
+
+
+def read_card(data, mime):
+    """Claude reads a business card → dict with is_business_card, reason and CARD_FIELDS."""
+    import anthropic  # imported here: the other functions don't need the SDK
+    source = {'type': 'base64', 'media_type': mime, 'data': base64.standard_b64encode(data).decode()}
+    block = {'type': 'document' if mime == 'application/pdf' else 'image', 'source': source}
+    client = anthropic.Anthropic(api_key=env('ANTHROPIC_API_KEY'), timeout=50, max_retries=1)
+    response = client.beta.messages.create(
+        model=CARD_MODEL, max_tokens=4000,
+        betas=['server-side-fallback-2026-07-01'], fallbacks='default',
+        output_config={'effort': 'low', 'format': {'type': 'json_schema', 'schema': CARD_SCHEMA}},
+        messages=[{'role': 'user', 'content': [block, {'type': 'text', 'text': CARD_PROMPT}]}],
+    )
+    if response.stop_reason != 'end_turn':
+        raise RuntimeError(f'Claude stopped: {response.stop_reason}')
+    return json.loads(next(b.text for b in response.content if b.type == 'text'))
+
+
+def card_comment(card):
+    labels = {'company': 'Компания', 'position': 'Должность', 'email': 'Email', 'website': 'Сайт'}
+    return '\n'.join(f'{t}: {card[k].strip()}' for k, t in labels.items() if card.get(k, '').strip())
 
 
 # ---------- Telegram ----------
@@ -207,9 +280,9 @@ def session_cookie(value, max_age):
 
 
 # ---------- HTTP ----------
-def read_json(handler):
+def read_json(handler, limit=20000):
     n = int(handler.headers.get('Content-Length') or 0)
-    if n > 20000:
+    if n > limit:
         return {}
     try:
         return json.loads(handler.rfile.read(n) or b'{}')
