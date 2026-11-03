@@ -34,6 +34,7 @@ class handler(BaseHTTPRequestHandler):
             return _lib.send_json(self, 502, {'error': 'Не удалось распознать файл. Попробуйте ещё раз.'})
         if not card.get('is_business_card'):
             reason = card.get('reason', '').strip().rstrip('.')
+            reason = reason[:1].lower() + reason[1:]  # it follows a dash mid-sentence
             return _lib.send_json(self, 422, {'error': 'Это не похоже на визитку' + (f' — {reason}' if reason else '') +
                                               '. Ничего не сохранено, загрузите фото визитки.'})
         name = f'{secrets.token_hex(12)}.{_lib.CARD_TYPES[mime]}'
