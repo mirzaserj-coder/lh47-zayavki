@@ -1,5 +1,15 @@
 {
   "outputDirectory": "public",
   "cleanUrls": true,
-  "rewrites": [{ "source": "/kp/:token", "destination": "/api/kp?t=:token" }]
+  "rewrites": [
+    {
+      "source": "/kp/:token",
+      "destination": "/api/kp?t=:token"
+    }
+  ],
+  "functions": {
+    "api/tg.py": {
+      "maxDuration": 120
+    }
+  }
 }

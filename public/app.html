@@ -42,6 +42,27 @@ textarea{min-height:90px;resize:vertical}
 .box{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:28px 20px;text-align:center;display:grid;gap:10px;justify-items:center}
 .box .ico{font-size:40px;line-height:1}
 .box a{color:var(--acc);font-weight:600}
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:4px;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:4px}
+.tab{background:none;border:0;color:var(--muted);font:600 14px Inter;padding:10px;border-radius:4px;cursor:pointer}
+.tab.on{background:var(--acc);color:#fff}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:8px 14px;font-size:14px;cursor:pointer}
+.chip input{position:absolute;opacity:0}
+.chip:has(input:checked){border-color:var(--acc);background:#ff40021f}
+.drop{display:grid;place-items:center;gap:6px;text-align:center;border:1px dashed var(--line);border-radius:6px;padding:26px 16px;cursor:pointer;color:var(--muted);font-size:14px}
+.drop b{color:var(--text);font-weight:600;font-size:15px}
+.drop input{display:none}
+.drop img{width:100%;max-height:220px;object-fit:cover;border-radius:4px}
+.left{font-size:13px;color:var(--muted);text-align:center}
+.result{display:grid;gap:10px}
+.result img,.hist img{width:100%;border-radius:6px;border:1px solid var(--line);display:block}
+.hist{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.hist figure{display:grid;gap:4px}
+.hist figcaption{font-size:12px;color:var(--muted)}
+.wait{display:grid;place-items:center;gap:10px;padding:30px 0;color:var(--muted);text-align:center}
+.spin{width:34px;height:34px;border:3px solid var(--line);border-top-color:var(--acc);border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.btn.ghost{background:none;border:1px solid var(--line);color:var(--text)}
 </style>
 </head>
 <body>
@@ -58,11 +79,16 @@ textarea{min-height:90px;resize:vertical}
     <a href="https://t.me/lh47_zayavki_bot">Открыть @lh47_zayavki_bot</a>
   </div>
 
+  <div id="top" hidden>
+    <h1 id="hello">Здравствуйте!</h1>
+  </div>
+  <div class="tabs" id="tabs" hidden>
+    <button class="tab on" data-t="form" type="button">Заявка</button>
+    <button class="tab" data-t="sketch" type="button">✨ Эскиз дома</button>
+  </div>
+
   <form id="form" novalidate hidden>
-    <div>
-      <h1 id="hello">Здравствуйте!</h1>
-      <p class="muted">Выберите услугу — архитектор LH47 свяжется с вами в течение рабочего дня.</p>
-    </div>
+    <p class="muted">Выберите услугу — архитектор LH47 свяжется с вами в течение рабочего дня.</p>
     <div class="services" id="services"></div>
     <label class="f">Телефон
       <input type="tel" name="phone" id="phone" placeholder="+373 69 123 456" autocomplete="tel" inputmode="tel">
@@ -73,6 +99,32 @@ textarea{min-height:90px;resize:vertical}
     </label>
     <div class="err" id="err"></div>
     <button class="btn" type="submit" id="send">Оставить заявку</button>
+  </form>
+
+  <!-- Эскиз: фото участка + стиль + пожелания → Nano Banana на нашем сервере (ключ в браузер не попадает). -->
+  <form id="sketch" novalidate hidden>
+    <p class="muted">Сфотографируйте свой участок — нейросеть покажет, как на нём может выглядеть дом от LH47.</p>
+    <label class="drop" id="drop"><span style="font-size:30px">📷</span><b>Фото участка</b><span>Сфотографировать или выбрать из галереи</span>
+      <input type="file" id="plot" accept="image/*"></label>
+    <div>
+      <p class="muted" style="margin-bottom:8px">Стиль дома</p>
+      <div class="chips" id="styles"></div>
+    </div>
+    <label class="f">Пожелания (необязательно)
+      <textarea name="wish" maxlength="500" placeholder="Два этажа, терраса, гараж на 2 машины, вид на озеро"></textarea>
+    </label>
+    <div class="err" id="sketchErr"></div>
+    <button class="btn" type="submit" id="draw">Создать эскиз</button>
+    <div class="left" id="left"></div>
+    <div class="wait" id="wait" hidden><div class="spin"></div>Рисуем дом на вашем участке… обычно 15–30 секунд</div>
+    <div class="result" id="result" hidden>
+      <img id="resultImg" alt="Эскиз дома">
+      <button class="btn ghost" type="button" id="toRequest">Хочу такой проект — оставить заявку</button>
+    </div>
+    <div id="histWrap" hidden>
+      <p class="muted" style="margin:8px 0">Мои эскизы</p>
+      <div class="hist" id="hist"></div>
+    </div>
   </form>
 
   <div id="done" class="box" hidden>
@@ -94,7 +146,7 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '
 const tg = window.Telegram && Telegram.WebApp;
 // Только подписанная строка initData уходит на сервер; имя показываем то, что сервер проверил.
 const initData = (tg && tg.initData) || '';
-let me = null;
+let me = null, left = 0, limit = 5;
 
 async function call(body) {
   const r = await fetch('/api/tg', {method: 'POST', headers: {'Content-Type': 'application/json'},
@@ -120,11 +172,14 @@ async function start() {
     const data = await call({});
     me = data.user;
     $('hello').textContent = `Здравствуйте, ${me.name}!`;
+    left = data.sketches_left; limit = data.limit;
+    $('styles').innerHTML = data.styles.map((s, i) => `<label class="chip"><input type="radio" name="style" value="${esc(s)}"${i ? '' : ' checked'}>${esc(s)}</label>`).join('');
+    showLeft();
     $('services').innerHTML = data.services.map((s, i) => `
       <label class="svc"><input type="radio" name="service" value="${esc(s)}"${i ? '' : ' checked'}>
         <b>${esc(s)}</b><span>${esc(ABOUT[s] || '')}</span></label>`).join('');
     $('phoneHint').textContent = me.username ? `Можно не указывать — напишем вам в Telegram @${me.username}.` : 'Telegram-логина нет, поэтому нужен телефон.';
-    $('loading').hidden = true; $('form').hidden = false;
+    $('loading').hidden = true; $('top').hidden = $('tabs').hidden = $('form').hidden = false;
   } catch (e) { outside(e.status === 401 ? e.message : 'Не удалось связаться с сервером. Попробуйте позже.'); }
 }
 
@@ -142,10 +197,72 @@ $('form').addEventListener('submit', async e => {
   $('send').disabled = false;
 });
 
+$('tabs').onclick = e => {
+  const t = e.target.closest('.tab'); if (!t) return;
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('on', x === t));
+  $('form').hidden = t.dataset.t !== 'form'; $('sketch').hidden = t.dataset.t !== 'sketch'; $('done').hidden = true;
+  if (t.dataset.t === 'sketch') loadHistory();
+};
+
+function showLeft() {
+  $('left').textContent = left > 0 ? `Осталось эскизов на сегодня: ${left} из ${limit}` : `Лимит на сегодня исчерпан (${limit} из ${limit}) — новые эскизы завтра`;
+}
+
+// Фото с телефона уменьшаем до 1600 px: нейросети хватает, и запрос укладывается в лимит Vercel.
+let plot = null;
+$('plot').onchange = async e => {
+  const file = e.target.files[0]; if (!file) return;
+  $('sketchErr').textContent = '';
+  try {
+    const img = await createImageBitmap(file);
+    const k = Math.min(1, 1600 / Math.max(img.width, img.height));
+    const c = Object.assign(document.createElement('canvas'), {width: Math.round(img.width * k), height: Math.round(img.height * k)});
+    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+    const url = c.toDataURL('image/jpeg', 0.85);
+    plot = url.split(',')[1];
+    $('drop').innerHTML = `<img src="${url}" alt="Участок"><span>Нажмите, чтобы выбрать другое фото</span>`;
+    $('drop').appendChild(e.target);  // innerHTML above detached the input — put it back
+  } catch (err) { fail('Не удалось открыть фото. Попробуйте другое.', 'sketchErr'); }
+};
+
+$('sketch').addEventListener('submit', async e => {
+  e.preventDefault();
+  const f = e.target; $('sketchErr').textContent = '';
+  if (!plot) return fail('Сначала добавьте фото участка.', 'sketchErr');
+  $('draw').disabled = true; $('wait').hidden = false; $('result').hidden = true;
+  try {
+    const data = await call({sketch: 1, photo: plot, mime: 'image/jpeg', style: f.elements.style.value, wish: f.elements.wish.value});
+    left = data.sketches_left;
+    $('resultImg').src = data.result; $('result').hidden = false;
+    $('result').scrollIntoView({block: 'start', behavior: 'smooth'});
+    tg && tg.HapticFeedback && tg.HapticFeedback.notificationOccurred('success');
+    loadHistory();
+  } catch (err) {
+    if (err.status === 429) left = 0;
+    fail(err.message, 'sketchErr');
+  }
+  showLeft(); $('wait').hidden = true; $('draw').disabled = false;
+});
+
+$('toRequest').onclick = () => {
+  const f = $('sketch').elements;
+  $('form').elements.comment.value = `По эскизу из приложения: стиль «${f.style.value}»` + (f.wish.value.trim() ? `, ${f.wish.value.trim()}` : '');
+  document.querySelector('.tab[data-t="form"]').click();
+};
+
+async function loadHistory() {
+  try {
+    const {sketches} = await call({history: 1});
+    $('histWrap').hidden = !sketches.length;
+    $('hist').innerHTML = sketches.map(s => `<figure><a href="${esc(s.result)}" target="_blank"><img src="${esc(s.result)}" alt="" loading="lazy"></a>
+      <figcaption>${esc(s.style)} · ${esc(s.local_time)}</figcaption></figure>`).join('');
+  } catch (err) { /* история не критична */ }
+}
+
 // Встроенный браузер Telegram не всегда показывает подсказки формы — ошибку показываем сами, и всплывающим окном.
-function fail(text) {
-  $('err').textContent = text;
-  $('err').scrollIntoView({block: 'center', behavior: 'smooth'});
+function fail(text, el = 'err') {
+  $(el).textContent = text;
+  $(el).scrollIntoView({block: 'center', behavior: 'smooth'});
   try { tg && tg.showAlert(text); } catch (e) { /* старый Telegram без showAlert */ }
 }
 

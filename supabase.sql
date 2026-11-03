@@ -35,3 +35,19 @@ update public.leads set history = jsonb_build_array(jsonb_build_object('stage', 
 alter table public.leads add column if not exists doc text;
 insert into storage.buckets (id, name, public) values ('cards', 'cards', false) on conflict (id) do nothing;
 notify pgrst, 'reload schema';
+
+-- ДЗ №2, блок 4: эскизы дома (Nano Banana) из Mini App — история и лимит 5 в день. Запустить один раз.
+create table if not exists public.generations (
+  id         bigint generated always as identity primary key,
+  created_at timestamptz not null default now(),
+  tg_id      bigint not null,
+  tg_name    text not null default '',
+  style      text not null,
+  wish       text not null default '',
+  photo      text not null,
+  result     text not null
+);
+create index if not exists generations_tg_idx on public.generations (tg_id, created_at desc);
+alter table public.generations enable row level security;
+insert into storage.buckets (id, name, public) values ('sketches', 'sketches', false) on conflict (id) do nothing;
+notify pgrst, 'reload schema';

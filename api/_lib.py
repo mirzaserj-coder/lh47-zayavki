@@ -1,7 +1,7 @@
 """Shared helpers: Supabase REST, Telegram, admin session cookie, JSON responses.
 
 All keys come from Vercel environment variables, never from the code:
-SUPABASE_URL, SUPABASE_SERVICE_KEY, TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, ADMIN_PASSWORD, ANTHROPIC_API_KEY.
+SUPABASE_URL, SUPABASE_SERVICE_KEY, TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, ADMIN_PASSWORD, ANTHROPIC_API_KEY, GEMINI_API_KEY.
 """
 import base64, hashlib, hmac, json, os, re, time, urllib.error, urllib.parse, urllib.request
 from datetime import datetime, timezone
@@ -110,16 +110,16 @@ def supabase(method, path, body=None, prefer=None):
 CARD_BUCKET = 'cards'
 
 
-def storage_put(name, data, mime):
-    url = f"{env('SUPABASE_URL').rstrip('/')}/storage/v1/object/{CARD_BUCKET}/{name}"
+def storage_put(name, data, mime, bucket=CARD_BUCKET):
+    url = f"{env('SUPABASE_URL').rstrip('/')}/storage/v1/object/{bucket}/{name}"
     req = urllib.request.Request(url, data=data, method='POST', headers=supabase_headers(mime))
     with urllib.request.urlopen(req, timeout=20) as r:
         r.read()
 
 
-def storage_link(name, seconds=300):
+def storage_link(name, seconds=300, bucket=CARD_BUCKET):
     base = env('SUPABASE_URL').rstrip('/') + '/storage/v1'
-    req = urllib.request.Request(f'{base}/object/sign/{CARD_BUCKET}/{name}', method='POST',
+    req = urllib.request.Request(f'{base}/object/sign/{bucket}/{name}', method='POST',
                                  data=json.dumps({'expiresIn': seconds}).encode(), headers=supabase_headers())
     with urllib.request.urlopen(req, timeout=10) as r:
         return base + json.load(r)['signedURL']
@@ -170,6 +170,54 @@ def read_card(data, mime):
 def card_comment(card):
     labels = {'company': 'Компания', 'position': 'Должность', 'email': 'Email', 'website': 'Сайт'}
     return '\n'.join(f'{t}: {card[k].strip()}' for k, t in labels.items() if card.get(k, '').strip())
+
+
+# ---------- Nano Banana: house sketches ----------
+SKETCH_BUCKET = 'sketches'
+SKETCH_MODEL = 'gemini-nano-banana-2.1'
+SKETCH_DAILY_LIMIT = 5
+SKETCH_STYLES = {
+    'Современный': 'modern minimalist house with large panoramic windows and a flat roof',
+    'Барнхаус': 'barnhouse with a steep gable roof, dark metal and wood cladding',
+    'Скандинавский': 'Scandinavian house with light timber facade and a pitched roof',
+    'Средиземноморский': 'Mediterranean villa with light stucco walls, terracotta roof and terraces',
+}
+
+
+def make_sketch(photo, mime, style, wish):
+    """Nano Banana draws a house on the client's photo of the plot → (jpeg/png bytes, mime)."""
+    prompt = (
+        'Architectural exterior visualization by LH47 architecture bureau. On this photo of the land plot, '
+        f'design and place a new {SKETCH_STYLES[style]}. Keep the real surroundings, terrain, trees, perspective '
+        'and lighting of the photo; the house must sit naturally on the plot at a believable scale. '
+        + (f'Client wishes (in Russian): {wish}. ' if wish else '') +
+        'Photorealistic, daylight, no people, no text, no watermarks.'
+    )
+    body = {'contents': [{'parts': [{'inline_data': {'mime_type': mime, 'data': base64.b64encode(photo).decode()}},
+                                    {'text': prompt}]}],
+            'generationConfig': {'responseModalities': ['IMAGE'], 'imageConfig': {'aspectRatio': '4:3'}}}
+    url = f'https://generativelanguage.googleapis.com/v1beta/models/{SKETCH_MODEL}:generateContent'
+    req = urllib.request.Request(url, data=json.dumps(body).encode(), method='POST',
+                                 headers={'Content-Type': 'application/json', 'x-goog-api-key': env('GEMINI_API_KEY')})
+    try:
+        with urllib.request.urlopen(req, timeout=110) as r:
+            result = json.load(r)
+    except urllib.error.HTTPError as e:  # bad key, no billing, wrong model — Google says which in the body
+        print('gemini', e.code, e.read()[:400].decode('utf-8', 'replace'))
+        raise
+    for cand in result.get('candidates') or []:
+        for part in (cand.get('content') or {}).get('parts') or []:
+            data = part.get('inlineData') or part.get('inline_data')
+            if data and data.get('data'):
+                return base64.b64decode(data['data']), data.get('mimeType') or data.get('mime_type') or 'image/png'
+    print('gemini: no image', json.dumps(result)[:400])
+    return None, None
+
+
+def day_start_utc():
+    """Midnight in Chisinau as a UTC ISO string — the daily limit resets at local midnight."""
+    now = datetime.now(TZ)
+    return now.replace(hour=0, minute=0, second=0, microsecond=0).astimezone(timezone.utc).isoformat(timespec='seconds')
 
 
 # ---------- Telegram ----------

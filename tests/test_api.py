@@ -57,6 +57,25 @@ class BusinessCard(unittest.TestCase):
         self.assertEqual(set(_lib.CARD_SCHEMA['required']), set(_lib.CARD_SCHEMA['properties']))
 
 
+class Sketch(unittest.TestCase):
+    def test_day_starts_at_chisinau_midnight(self):
+        from datetime import datetime
+        start = datetime.fromisoformat(_lib.day_start_utc()).astimezone(_lib.TZ)
+        self.assertEqual((start.hour, start.minute), (0, 0))
+
+    def test_limit_is_enforced(self):
+        sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'api'))
+        import tg
+        calls = []
+        _lib_supabase, _lib.supabase = _lib.supabase, lambda m, p, b=None, prefer=None: calls.append(p) or [{}] * 5
+        try:
+            self.assertEqual(tg.sketches_today(42), 5)
+            self.assertIn('tg_id=eq.42', calls[0])
+            self.assertIn('created_at=gte.', calls[0])
+        finally:
+            _lib.supabase = _lib_supabase
+
+
 class TelegramInitData(unittest.TestCase):
     def setUp(self):
         sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
